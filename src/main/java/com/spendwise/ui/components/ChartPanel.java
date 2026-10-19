@@ -25,11 +25,14 @@ import org.jfree.data.general.DefaultPieDataset;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.Timer;
+import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.time.Month;
 import java.time.format.TextStyle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -173,6 +176,64 @@ public class ChartPanel extends JPanel {
         explodeTimer.start();
     }
 
+    public void displaySplineWaveChart(String title, List<MonthComparison> history) {
+        stopActiveTimer();
+        removeAll();
+        if (history == null || history.isEmpty()) {
+            add(new EmptyStatePanel("No Monthly History", "Add transactions across months to compare.", null, null), BorderLayout.CENTER);
+            revalidate();
+            repaint();
+            return;
+        }
+
+        List<String> labels = new ArrayList<>();
+        List<Double> incomeVals = new ArrayList<>();
+        List<Double> expenseVals = new ArrayList<>();
+        List<Double> savingsVals = new ArrayList<>();
+
+        for (MonthComparison mc : history) {
+            String monthName = Month.of(mc.month()).getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+            labels.add(monthName);
+            incomeVals.add(mc.income().doubleValue());
+            expenseVals.add(mc.expense().doubleValue());
+            savingsVals.add(Math.max(0.0, mc.netSavings().doubleValue()));
+        }
+
+        List<SplineWaveChart.Series> series = List.of(
+                new SplineWaveChart.Series("Income", AppTheme.PRIMARY_ACCENT, incomeVals),
+                new SplineWaveChart.Series("Expenses", AppTheme.DANGER, expenseVals),
+                new SplineWaveChart.Series("Net Savings", AppTheme.WARNING, savingsVals)
+        );
+
+        SplineWaveChart splineChart = new SplineWaveChart();
+        splineChart.setData(title, labels, series);
+
+        JPanel headerBar = new JPanel(new BorderLayout());
+        headerBar.setOpaque(false);
+        headerBar.setBorder(new EmptyBorder(0, 0, 4, 0));
+
+        JPanel togglePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        togglePanel.setOpaque(false);
+
+        StyledButton splineBtn = new StyledButton("Spline Wave", StyledButton.ButtonStyle.PRIMARY);
+        splineBtn.setFont(AppTheme.FONT_SMALL);
+        splineBtn.setPreferredSize(new Dimension(94, 26));
+
+        StyledButton barBtn = new StyledButton("Pill Bars", StyledButton.ButtonStyle.SECONDARY);
+        barBtn.setFont(AppTheme.FONT_SMALL);
+        barBtn.setPreferredSize(new Dimension(78, 26));
+        barBtn.addActionListener(e -> displayIncomeVsExpenseBarChart(title, history));
+
+        togglePanel.add(splineBtn);
+        togglePanel.add(barBtn);
+        headerBar.add(togglePanel, BorderLayout.EAST);
+
+        add(headerBar, BorderLayout.NORTH);
+        add(splineChart, BorderLayout.CENTER);
+        revalidate();
+        repaint();
+    }
+
     public void displayIncomeVsExpenseBarChart(String title, List<MonthComparison> history) {
         stopActiveTimer();
         removeAll();
@@ -202,7 +263,7 @@ public class ChartPanel extends JPanel {
 
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
         renderer.setBarPainter(new StandardBarPainter());
-        renderer.setSeriesPaint(0, AppTheme.SUCCESS);
+        renderer.setSeriesPaint(0, AppTheme.PRIMARY_ACCENT);
         renderer.setSeriesPaint(1, AppTheme.DANGER);
         renderer.setShadowVisible(false);
 
@@ -236,6 +297,27 @@ public class ChartPanel extends JPanel {
             }
         });
 
+        JPanel headerBar = new JPanel(new BorderLayout());
+        headerBar.setOpaque(false);
+        headerBar.setBorder(new EmptyBorder(0, 0, 4, 0));
+
+        JPanel togglePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        togglePanel.setOpaque(false);
+
+        StyledButton splineBtn = new StyledButton("Spline Wave", StyledButton.ButtonStyle.SECONDARY);
+        splineBtn.setFont(AppTheme.FONT_SMALL);
+        splineBtn.setPreferredSize(new Dimension(94, 26));
+        splineBtn.addActionListener(e -> displaySplineWaveChart(title, history));
+
+        StyledButton barBtn = new StyledButton("Pill Bars", StyledButton.ButtonStyle.PRIMARY);
+        barBtn.setFont(AppTheme.FONT_SMALL);
+        barBtn.setPreferredSize(new Dimension(78, 26));
+
+        togglePanel.add(splineBtn);
+        togglePanel.add(barBtn);
+        headerBar.add(togglePanel, BorderLayout.EAST);
+
+        add(headerBar, BorderLayout.NORTH);
         add(jfreePanel, BorderLayout.CENTER);
         revalidate();
         repaint();

@@ -1,6 +1,5 @@
 package com.spendwise.ui.screens;
 
-import com.spendwise.model.Category;
 import com.spendwise.model.CategorySpending;
 import com.spendwise.model.CategoryType;
 import com.spendwise.model.MonthComparison;
@@ -13,6 +12,7 @@ import com.spendwise.ui.components.AsyncWorker;
 import com.spendwise.ui.components.ChartPanel;
 import com.spendwise.ui.components.ScrollablePanel;
 import com.spendwise.ui.components.SectionHeader;
+import com.spendwise.ui.components.SimulatorComparisonChart;
 import com.spendwise.ui.components.StyledButton;
 import com.spendwise.ui.components.StyledComboBox;
 import com.spendwise.ui.components.StyledTable;
@@ -26,7 +26,6 @@ import com.spendwise.util.MoneyUtil;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import java.awt.Component;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -38,8 +37,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.io.File;
 import java.io.FileWriter;
@@ -81,6 +83,7 @@ public class ReportsScreen extends JPanel implements BaseScreen {
     private final StyledTextField simPercentField;
     private final JLabel simSavingsLabel;
     private final JLabel simBalanceLabel;
+    private final SimulatorComparisonChart simChart;
     private final Map<Long, BigDecimal> categorySpendingsMap = new HashMap<>();
     private BigDecimal currentExpenseTotal = BigDecimal.ZERO;
 
@@ -141,9 +144,9 @@ public class ReportsScreen extends JPanel implements BaseScreen {
         chartsPanel.add(historyChart);
         content.add(chartsPanel);
 
-        content.add(Box.createVerticalStrut(20));
+        content.add(Box.createVerticalStrut(24));
 
-        SectionHeader breakdownHeader = new SectionHeader("Category Spending Breakdown", "SQL-aggregated breakdown by volume and percentage");
+        SectionHeader breakdownHeader = new SectionHeader("Spending Breakdown by Category", "Granular expenditure details for the selected period");
         breakdownHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(breakdownHeader);
 
@@ -171,26 +174,46 @@ public class ReportsScreen extends JPanel implements BaseScreen {
         simHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(simHeader);
 
-        JPanel simCard = new JPanel(new BorderLayout(16, 12));
+        JPanel simCard = new JPanel(new BorderLayout(24, 16));
         simCard.setBackground(AppTheme.CARD_BG);
         simCard.setAlignmentX(Component.LEFT_ALIGNMENT);
         simCard.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(AppTheme.CARD_BORDER, 1),
-                new EmptyBorder(16, 20, 16, 20)
+                new EmptyBorder(18, 20, 18, 20)
         ));
-        simCard.setPreferredSize(new Dimension(800, 110));
-        simCard.setMaximumSize(new Dimension(3000, 120));
+        simCard.setPreferredSize(new Dimension(800, 240));
+        simCard.setMaximumSize(new Dimension(3000, 260));
 
-        JPanel simControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        simControls.setOpaque(false);
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        leftPanel.setOpaque(false);
+
+        JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        row1.setOpaque(false);
+        row1.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel targetLbl = new JLabel("Target Expense Category:");
+        targetLbl.setFont(AppTheme.FONT_BODY_BOLD);
+        targetLbl.setForeground(AppTheme.TEXT_SECONDARY);
 
         simCategoryCombo = new StyledComboBox<>();
-        simCategoryCombo.setPreferredSize(new Dimension(180, 36));
+        simCategoryCombo.setPreferredSize(new Dimension(200, 36));
         simCategoryCombo.addActionListener(e -> runSimulation());
+
+        row1.add(targetLbl);
+        row1.add(simCategoryCombo);
+
+        JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        row2.setOpaque(false);
+        row2.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel redLbl = new JLabel("Spending Reduction:");
+        redLbl.setFont(AppTheme.FONT_BODY_BOLD);
+        redLbl.setForeground(AppTheme.TEXT_SECONDARY);
 
         simSlider = new JSlider(0, 100, 25);
         simSlider.setOpaque(false);
-        simSlider.setPreferredSize(new Dimension(140, 32));
+        simSlider.setPreferredSize(new Dimension(150, 32));
 
         simPercentField = new StyledTextField(4);
         simPercentField.setText("25");
@@ -211,36 +234,88 @@ public class ReportsScreen extends JPanel implements BaseScreen {
         });
 
         StyledButton simCalculateBtn = new StyledButton("Simulate", StyledButton.ButtonStyle.PRIMARY);
-        simCalculateBtn.addActionListener(e -> runSimulation());
+        simCalculateBtn.addActionListener(e -> {
+            runSimulation();
+            showToast("What-If simulation recalculated", Toast.ToastType.SUCCESS);
+        });
 
         StyledButton simResetBtn = new StyledButton("Reset", StyledButton.ButtonStyle.GHOST);
         simResetBtn.addActionListener(e -> resetSimulation());
 
-        simControls.add(new JLabel("Target:"));
-        simControls.add(simCategoryCombo);
-        simControls.add(new JLabel("Reduction:"));
-        simControls.add(simSlider);
-        simControls.add(simPercentField);
-        simControls.add(new JLabel("%"));
-        simControls.add(simCalculateBtn);
-        simControls.add(simResetBtn);
+        row2.add(redLbl);
+        row2.add(simSlider);
+        row2.add(simPercentField);
+        row2.add(new JLabel("%"));
+        row2.add(simCalculateBtn);
+        row2.add(simResetBtn);
 
-        simCard.add(simControls, BorderLayout.NORTH);
+        JPanel presetRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        presetRow.setOpaque(false);
+        presetRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel presetLbl = new JLabel("Quick Presets:");
+        presetLbl.setFont(AppTheme.FONT_SMALL);
+        presetLbl.setForeground(AppTheme.TEXT_MUTED);
+        presetRow.add(presetLbl);
 
-        JPanel simResults = new JPanel(new FlowLayout(FlowLayout.LEFT, 24, 0));
-        simResults.setOpaque(false);
+        int[] presets = {10, 25, 50, 75};
+        for (int p : presets) {
+            StyledButton pBtn = new StyledButton(p + "%", StyledButton.ButtonStyle.SECONDARY);
+            pBtn.setFont(AppTheme.FONT_SMALL);
+            pBtn.setPreferredSize(new Dimension(56, 26));
+            pBtn.addActionListener(ev -> simSlider.setValue(p));
+            presetRow.add(pBtn);
+        }
 
-        simSavingsLabel = new JLabel("Potential Savings: Rs 0.00");
-        simSavingsLabel.setFont(AppTheme.FONT_BODY_BOLD);
+        JPanel row3 = new JPanel(new GridLayout(1, 2, 16, 0));
+        row3.setOpaque(false);
+        row3.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel savBox = new JPanel(new BorderLayout(4, 4));
+        savBox.setBackground(new Color(16, 185, 129, 20));
+        savBox.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(16, 185, 129, 80), 1),
+                new EmptyBorder(8, 12, 8, 12)
+        ));
+        JLabel savTitle = new JLabel("POTENTIAL SAVINGS");
+        savTitle.setFont(new Font("JetBrains Mono", Font.BOLD, 10));
+        savTitle.setForeground(AppTheme.PRIMARY_ACCENT);
+        simSavingsLabel = new JLabel("Rs 0.00");
+        simSavingsLabel.setFont(AppTheme.FONT_HEADER);
         simSavingsLabel.setForeground(AppTheme.PRIMARY_ACCENT);
+        savBox.add(savTitle, BorderLayout.NORTH);
+        savBox.add(simSavingsLabel, BorderLayout.CENTER);
 
-        simBalanceLabel = new JLabel("Projected New Expense: Rs 0.00");
-        simBalanceLabel.setFont(AppTheme.FONT_BODY_BOLD);
+        JPanel balBox = new JPanel(new BorderLayout(4, 4));
+        balBox.setBackground(new Color(39, 48, 59, 40));
+        balBox.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(AppTheme.CARD_BORDER, 1),
+                new EmptyBorder(8, 12, 8, 12)
+        ));
+        JLabel balTitle = new JLabel("PROJECTED MONTHLY EXPENSES");
+        balTitle.setFont(new Font("JetBrains Mono", Font.BOLD, 10));
+        balTitle.setForeground(AppTheme.TEXT_SECONDARY);
+        simBalanceLabel = new JLabel("Rs 0.00");
+        simBalanceLabel.setFont(AppTheme.FONT_HEADER);
         simBalanceLabel.setForeground(AppTheme.TEXT_PRIMARY);
+        balBox.add(balTitle, BorderLayout.NORTH);
+        balBox.add(simBalanceLabel, BorderLayout.CENTER);
 
-        simResults.add(simSavingsLabel);
-        simResults.add(simBalanceLabel);
-        simCard.add(simResults, BorderLayout.SOUTH);
+        row3.add(savBox);
+        row3.add(balBox);
+
+        leftPanel.add(row1);
+        leftPanel.add(Box.createVerticalStrut(10));
+        leftPanel.add(row2);
+        leftPanel.add(Box.createVerticalStrut(6));
+        leftPanel.add(presetRow);
+        leftPanel.add(Box.createVerticalStrut(12));
+        leftPanel.add(row3);
+
+        simChart = new SimulatorComparisonChart();
+        simChart.setPreferredSize(new Dimension(320, 190));
+
+        simCard.add(leftPanel, BorderLayout.CENTER);
+        simCard.add(simChart, BorderLayout.EAST);
 
         content.add(simCard);
 
@@ -301,7 +376,7 @@ public class ReportsScreen extends JPanel implements BaseScreen {
 
         String monthTitle = Month.of(currentMonth).getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + currentYear;
         categoryChart.displayCategoryPieChart("Expense Distribution — " + monthTitle, payload.spending);
-        historyChart.displayIncomeVsExpenseBarChart("Income vs Expenses (6-Month Trend)", payload.history);
+        historyChart.displaySplineWaveChart("Cashflow Velocity & Trajectory (6-Month Spline Wave)", payload.history);
 
         currentBreakdown.clear();
         currentBreakdown.addAll(payload.spending);
@@ -324,7 +399,13 @@ public class ReportsScreen extends JPanel implements BaseScreen {
             });
         }
 
-        resetSimulation();
+        if (simCategoryCombo.getItemCount() > 0) {
+            simCategoryCombo.setSelectedIndex(0);
+            runSimulation();
+        } else {
+            resetSimulation();
+        }
+
         content.revalidate();
         content.repaint();
     }
@@ -332,7 +413,9 @@ public class ReportsScreen extends JPanel implements BaseScreen {
     private void runSimulation() {
         CategoryItem item = (CategoryItem) simCategoryCombo.getSelectedItem();
         if (item == null || item.categoryId == null) {
-            showToast("No expense categories available to simulate.", Toast.ToastType.INFO);
+            simSavingsLabel.setText("Rs 0.00");
+            simBalanceLabel.setText(MoneyUtil.formatRupees(currentExpenseTotal));
+            simChart.reset(currentExpenseTotal.doubleValue());
             return;
         }
 
@@ -340,26 +423,28 @@ public class ReportsScreen extends JPanel implements BaseScreen {
         try {
             percent = Double.parseDouble(simPercentField.getText().trim());
             if (percent < 0 || percent > 100) {
-                showToast("Please enter a reduction percentage between 0 and 100.", Toast.ToastType.INFO);
                 return;
             }
         } catch (NumberFormatException e) {
-            showToast("Invalid percentage value.", Toast.ToastType.INFO);
             return;
         }
 
         Map<Long, Double> reductions = Map.of(item.categoryId, percent);
         SimulatorResult result = analysisService.simulateSavings(currentExpenseTotal, categorySpendingsMap, reductions);
 
-        simSavingsLabel.setText("Potential Savings: " + MoneyUtil.formatRupees(result.totalPotentialSavings()));
-        simBalanceLabel.setText("Projected New Expense: " + MoneyUtil.formatRupees(result.projectedNewExpense()));
+        simSavingsLabel.setText("+" + MoneyUtil.formatRupees(result.totalPotentialSavings()));
+        simBalanceLabel.setText(MoneyUtil.formatRupees(result.projectedNewExpense()));
+
+        BigDecimal categorySpending = categorySpendingsMap.getOrDefault(item.categoryId, BigDecimal.ZERO);
+        simChart.updateSimulation(item.categoryName(), categorySpending.doubleValue(), percent);
     }
 
     private void resetSimulation() {
         simSlider.setValue(25);
         simPercentField.setText("25");
-        simSavingsLabel.setText("Potential Savings: Rs 0.00");
-        simBalanceLabel.setText("Projected New Expense: " + MoneyUtil.formatRupees(currentExpenseTotal));
+        simSavingsLabel.setText("Rs 0.00");
+        simBalanceLabel.setText(MoneyUtil.formatRupees(currentExpenseTotal));
+        simChart.reset(currentExpenseTotal.doubleValue());
     }
 
     private void exportCsv() {

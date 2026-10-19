@@ -526,7 +526,7 @@ public class DashboardScreen extends JPanel implements BaseScreen {
 
         String monthTitle = Month.of(currentMonth).getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + currentYear;
         categoryChart.displayCategoryPieChart("Expense Allocation by Category — " + monthTitle, data.spending);
-        historyChart.displayIncomeVsExpenseBarChart("6-Month Financial Cashflow Comparison", data.history);
+        historyChart.displaySplineWaveChart("Cashflow Velocity & Trajectory (6-Month Spline Wave)", data.history);
 
         updateSignalsQueue(data.forecast, data.unusual, data.overallBudget, data.summary);
 
