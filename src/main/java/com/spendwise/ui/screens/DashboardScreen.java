@@ -151,11 +151,6 @@ public class DashboardScreen extends JPanel implements BaseScreen {
 
         content.add(Box.createVerticalStrut(16));
 
-        JPanel lifecycleCard = buildLifecycleCard();
-        content.add(lifecycleCard);
-
-        content.add(Box.createVerticalStrut(16));
-
         JPanel tableCard = buildCard("Recent Cashflow Activity", "Latest transactions recorded in MySQL ledger");
         String[] columns = {"Date", "Category", "Description", "Type", "Amount"};
         recentTxModel = new DefaultTableModel(columns, 0) {
@@ -398,47 +393,6 @@ public class DashboardScreen extends JPanel implements BaseScreen {
         row.add(top, BorderLayout.NORTH);
         row.add(d, BorderLayout.SOUTH);
         return row;
-    }
-
-    private JPanel buildLifecycleCard() {
-        JPanel card = buildCard("Decision Lifecycle", "The operating loop behind every SpendWise recommendation");
-        JPanel stages = new JPanel(new GridLayout(1, 5, 10, 0));
-        stages.setOpaque(false);
-        stages.setBorder(new EmptyBorder(8, 0, 4, 0));
-
-        stages.add(createStageItem("01", "Ingest", "PreparedStatement SQL queries against InnoDB ledger."));
-        stages.add(createStageItem("02", "Detect", "Scan elapsed-day window for abnormal run rates."));
-        stages.add(createStageItem("03", "Baseline", "Calculate 3-month rolling averages over same window."));
-        stages.add(createStageItem("04", "Forecast", "Daily run-rate projected to real month end."));
-        stages.add(createStageItem("05", "Guard", "Evaluate budget limits and trigger warnings."));
-
-        card.add(stages, BorderLayout.CENTER);
-        return card;
-    }
-
-    private JPanel createStageItem(String num, String title, String desc) {
-        JPanel stage = new JPanel();
-        stage.setLayout(new BoxLayout(stage, BoxLayout.Y_AXIS));
-        stage.setOpaque(false);
-
-        JLabel n = new JLabel(num);
-        n.setFont(new Font("JetBrains Mono", Font.BOLD, 10));
-        n.setForeground(AppTheme.SECONDARY_ACCENT);
-
-        JLabel t = new JLabel(title);
-        t.setFont(AppTheme.FONT_BODY_BOLD);
-        t.setForeground(AppTheme.TEXT_PRIMARY);
-
-        JLabel d = new JLabel("<html><body style='width: 130px;'>" + desc + "</body></html>");
-        d.setFont(AppTheme.FONT_SMALL);
-        d.setForeground(AppTheme.TEXT_MUTED);
-
-        stage.add(n);
-        stage.add(Box.createVerticalStrut(2));
-        stage.add(t);
-        stage.add(Box.createVerticalStrut(2));
-        stage.add(d);
-        return stage;
     }
 
     @Override
