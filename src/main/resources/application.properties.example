@@ -1,0 +1,7 @@
+db.url=jdbc:mysql://localhost:3306/spendwise?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+db.user=spendwise_app
+db.password=YOUR_PASSWORD_HERE
+
+db.test.url=jdbc:mysql://localhost:3306/spendwise_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+db.test.user=spendwise_app
+db.test.password=YOUR_PASSWORD_HERE
