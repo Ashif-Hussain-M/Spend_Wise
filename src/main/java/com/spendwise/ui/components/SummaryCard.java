@@ -24,6 +24,7 @@ public class SummaryCard extends JPanel {
     public SummaryCard(String title, String initialValue, String subtitle, Icon icon, Color accentColor) {
         setLayout(new BorderLayout(12, 8));
         setBackground(AppTheme.CARD_BG);
+        setOpaque(false);
         setBorder(new EmptyBorder(16, 20, 16, 20));
         setPreferredSize(new Dimension(220, 110));
 

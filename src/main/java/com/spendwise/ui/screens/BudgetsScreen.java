@@ -11,6 +11,7 @@ import com.spendwise.ui.components.AsyncWorker;
 import com.spendwise.ui.components.ConfirmationDialog;
 import com.spendwise.ui.components.EmptyStatePanel;
 import com.spendwise.ui.components.ProgressIndicator;
+import com.spendwise.ui.components.ScrollablePanel;
 import com.spendwise.ui.components.SectionHeader;
 import com.spendwise.ui.components.StyledButton;
 import com.spendwise.ui.components.StyledComboBox;
@@ -34,6 +35,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -74,12 +76,13 @@ public class BudgetsScreen extends JPanel implements BaseScreen {
         setLayout(new BorderLayout());
         setBackground(AppTheme.BG_DARK);
 
-        JPanel content = new JPanel();
+        ScrollablePanel content = new ScrollablePanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
         content.setBorder(new EmptyBorder(8, 0, 16, 0));
 
         SectionHeader header = new SectionHeader("Budgets & Spending Limits", "Set monthly expense caps and monitor category-level allocations");
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         StyledButton setOverallBtn = new StyledButton("+ Set Overall Budget", StyledButton.ButtonStyle.PRIMARY);
         setOverallBtn.addActionListener(e -> showOverallBudgetDialog());
@@ -93,7 +96,9 @@ public class BudgetsScreen extends JPanel implements BaseScreen {
 
         JPanel cardsPanel = new JPanel(new GridLayout(1, 3, 16, 0));
         cardsPanel.setOpaque(false);
-        cardsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 115));
+        cardsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cardsPanel.setPreferredSize(new Dimension(800, 115));
+        cardsPanel.setMaximumSize(new Dimension(3000, 115));
 
         overallBudgetCard = new SummaryCard("OVERALL BUDGET", "Rs 0.00", "Monthly allocation", AppIcons.budgets(18, AppTheme.PRIMARY_ACCENT), AppTheme.PRIMARY_ACCENT);
         spentCard = new SummaryCard("ACTUAL SPENT", "Rs 0.00", "Total expenses to date", AppIcons.delete(18, AppTheme.DANGER), AppTheme.DANGER);
@@ -107,6 +112,7 @@ public class BudgetsScreen extends JPanel implements BaseScreen {
         content.add(Box.createVerticalStrut(20));
 
         SectionHeader listHeader = new SectionHeader("Category Budget Allocations", "Utilization progress and status alerts");
+        listHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(listHeader);
 
         String[] cols = {"ID", "Category", "Budget Amount", "Actual Spent", "Remaining", "Utilization", "Status"};
@@ -121,9 +127,12 @@ public class BudgetsScreen extends JPanel implements BaseScreen {
         table.getColumnModel().getColumn(0).setMaxWidth(60);
 
         JScrollPane tableScroll = new JScrollPane(table);
+        tableScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         tableScroll.setBackground(AppTheme.CARD_BG);
         tableScroll.getViewport().setBackground(AppTheme.CARD_BG);
         tableScroll.setBorder(BorderFactory.createLineBorder(AppTheme.CARD_BORDER, 1));
+        tableScroll.setPreferredSize(new Dimension(800, 320));
+        tableScroll.setMaximumSize(new Dimension(3000, 400));
         content.add(tableScroll);
 
         content.add(Box.createVerticalStrut(12));
@@ -142,6 +151,12 @@ public class BudgetsScreen extends JPanel implements BaseScreen {
         content.add(actionRow);
 
         add(content, BorderLayout.CENTER);
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        loadBudgets();
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.spendwise.service.CategoryService;
 import com.spendwise.service.TransactionService;
 import com.spendwise.ui.components.AsyncWorker;
 import com.spendwise.ui.components.ConfirmationDialog;
+import com.spendwise.ui.components.ScrollablePanel;
 import com.spendwise.ui.components.SectionHeader;
 import com.spendwise.ui.components.StyledButton;
 import com.spendwise.ui.components.StyledComboBox;
@@ -30,6 +31,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -67,12 +69,13 @@ public class TransactionsScreen extends JPanel implements BaseScreen {
         setLayout(new BorderLayout());
         setBackground(AppTheme.BG_DARK);
 
-        JPanel content = new JPanel();
+        ScrollablePanel content = new ScrollablePanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
         content.setBorder(new EmptyBorder(8, 0, 16, 0));
 
         SectionHeader header = new SectionHeader("Transactions Ledger", "Search, filter, and record financial movements");
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         StyledButton addBtn = new StyledButton("+ Record Transaction", StyledButton.ButtonStyle.PRIMARY);
         addBtn.addActionListener(e -> showAddEditDialog(null));
@@ -82,11 +85,13 @@ public class TransactionsScreen extends JPanel implements BaseScreen {
 
         JPanel filterBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
         filterBar.setBackground(AppTheme.CARD_BG);
+        filterBar.setAlignmentX(Component.LEFT_ALIGNMENT);
         filterBar.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(AppTheme.CARD_BORDER, 1),
                 new EmptyBorder(6, 12, 6, 12)
         ));
-        filterBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 54));
+        filterBar.setPreferredSize(new Dimension(800, 54));
+        filterBar.setMaximumSize(new Dimension(3000, 54));
 
         searchField = new StyledTextField("Search description...", 14);
         typeFilter = new StyledComboBox<>(new String[]{"All Types", "Income", "Expense"});
@@ -126,15 +131,19 @@ public class TransactionsScreen extends JPanel implements BaseScreen {
         table.getColumnModel().getColumn(0).setMaxWidth(60);
 
         JScrollPane tableScroll = new JScrollPane(table);
+        tableScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         tableScroll.setBackground(AppTheme.CARD_BG);
         tableScroll.getViewport().setBackground(AppTheme.CARD_BG);
         tableScroll.setBorder(BorderFactory.createLineBorder(AppTheme.CARD_BORDER, 1));
+        tableScroll.setPreferredSize(new Dimension(800, 420));
+        tableScroll.setMaximumSize(new Dimension(3000, 600));
         content.add(tableScroll);
 
         content.add(Box.createVerticalStrut(12));
 
         JPanel actionRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actionRow.setOpaque(false);
+        actionRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         StyledButton editBtn = new StyledButton("Edit Selected", StyledButton.ButtonStyle.SECONDARY);
         editBtn.addActionListener(e -> onEditSelected());
@@ -147,6 +156,13 @@ public class TransactionsScreen extends JPanel implements BaseScreen {
         content.add(actionRow);
 
         add(content, BorderLayout.CENTER);
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        reloadCategoryFilter();
+        loadTransactionsForCurrentMonth();
     }
 
     @Override

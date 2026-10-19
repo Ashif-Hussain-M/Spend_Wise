@@ -14,8 +14,8 @@ import com.spendwise.service.SpendingAnalysisService;
 import com.spendwise.service.TransactionService;
 import com.spendwise.ui.components.AsyncWorker;
 import com.spendwise.ui.components.ChartPanel;
-import com.spendwise.ui.components.EmptyStatePanel;
 import com.spendwise.ui.components.ProgressIndicator;
+import com.spendwise.ui.components.ScrollablePanel;
 import com.spendwise.ui.components.SectionHeader;
 import com.spendwise.ui.components.StyledTable;
 import com.spendwise.ui.components.SummaryCard;
@@ -26,6 +26,7 @@ import com.spendwise.util.MoneyUtil;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import java.awt.Component;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -54,6 +55,7 @@ public class DashboardScreen extends JPanel implements BaseScreen {
     private int currentYear;
     private int currentMonth;
 
+    private final ScrollablePanel content;
     private final SummaryCard incomeCard;
     private final SummaryCard expenseCard;
     private final SummaryCard savingsCard;
@@ -82,14 +84,16 @@ public class DashboardScreen extends JPanel implements BaseScreen {
         setLayout(new BorderLayout());
         setBackground(AppTheme.BG_DARK);
 
-        JPanel content = new JPanel();
+        content = new ScrollablePanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
         content.setBorder(new EmptyBorder(8, 0, 24, 0));
 
         JPanel cardsPanel = new JPanel(new GridLayout(1, 4, 16, 0));
         cardsPanel.setOpaque(false);
-        cardsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 115));
+        cardsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cardsPanel.setPreferredSize(new Dimension(800, 115));
+        cardsPanel.setMaximumSize(new Dimension(3000, 115));
 
         incomeCard = new SummaryCard("TOTAL INCOME", "Rs 0.00", "Loading...", AppIcons.add(18, AppTheme.SUCCESS), AppTheme.SUCCESS);
         expenseCard = new SummaryCard("TOTAL EXPENSES", "Rs 0.00", "Loading...", AppIcons.delete(18, AppTheme.DANGER), AppTheme.DANGER);
@@ -106,11 +110,13 @@ public class DashboardScreen extends JPanel implements BaseScreen {
 
         JPanel budgetBanner = new JPanel(new BorderLayout(16, 0));
         budgetBanner.setBackground(AppTheme.CARD_BG);
+        budgetBanner.setAlignmentX(Component.LEFT_ALIGNMENT);
         budgetBanner.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(AppTheme.CARD_BORDER, 1),
                 new EmptyBorder(12, 16, 12, 16)
         ));
-        budgetBanner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+        budgetBanner.setPreferredSize(new Dimension(800, 48));
+        budgetBanner.setMaximumSize(new Dimension(3000, 48));
 
         JLabel bannerTitle = new JLabel("Monthly Budget Utilization:");
         bannerTitle.setFont(AppTheme.FONT_BODY_BOLD);
@@ -136,8 +142,9 @@ public class DashboardScreen extends JPanel implements BaseScreen {
 
         JPanel chartsPanel = new JPanel(new GridLayout(1, 2, 16, 0));
         chartsPanel.setOpaque(false);
-        chartsPanel.setPreferredSize(new Dimension(Integer.MAX_VALUE, 280));
-        chartsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 280));
+        chartsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        chartsPanel.setPreferredSize(new Dimension(800, 280));
+        chartsPanel.setMaximumSize(new Dimension(3000, 280));
 
         categoryChart = new ChartPanel();
         historyChart = new ChartPanel();
@@ -149,16 +156,20 @@ public class DashboardScreen extends JPanel implements BaseScreen {
         content.add(Box.createVerticalStrut(20));
 
         SectionHeader insightsHeader = new SectionHeader("Spending Intelligence", "Rule-based forecasts and unusual spending detection");
+        insightsHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(insightsHeader);
 
         insightsContainer = new JPanel(new GridLayout(1, 2, 16, 0));
         insightsContainer.setOpaque(false);
-        insightsContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
+        insightsContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+        insightsContainer.setPreferredSize(new Dimension(800, 120));
+        insightsContainer.setMaximumSize(new Dimension(3000, 130));
         content.add(insightsContainer);
 
         content.add(Box.createVerticalStrut(20));
 
         SectionHeader recentHeader = new SectionHeader("Recent Transactions", "Latest activity recorded across your accounts");
+        recentHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(recentHeader);
 
         String[] cols = {"Date", "Category", "Description", "Type", "Amount"};
@@ -171,20 +182,30 @@ public class DashboardScreen extends JPanel implements BaseScreen {
 
         recentTxTable = new StyledTable(recentTxModel);
         JScrollPane tableScroll = new JScrollPane(recentTxTable);
+        tableScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         tableScroll.setBackground(AppTheme.CARD_BG);
         tableScroll.getViewport().setBackground(AppTheme.CARD_BG);
         tableScroll.setBorder(BorderFactory.createLineBorder(AppTheme.CARD_BORDER, 1));
-        tableScroll.setPreferredSize(new Dimension(Integer.MAX_VALUE, 200));
-        tableScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
+        tableScroll.setPreferredSize(new Dimension(800, 220));
+        tableScroll.setMaximumSize(new Dimension(3000, 240));
         content.add(tableScroll);
 
         JScrollPane scrollPane = new JScrollPane(content);
         scrollPane.setOpaque(false);
         scrollPane.getViewport().setOpaque(false);
         scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         add(scrollPane, BorderLayout.CENTER);
+
+        loadDashboardData();
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        loadDashboardData();
     }
 
     @Override
@@ -294,6 +315,9 @@ public class DashboardScreen extends JPanel implements BaseScreen {
                     MoneyUtil.formatRupees(t.getAmount())
             });
         }
+
+        content.revalidate();
+        content.repaint();
     }
 
     private void updateInsightsPanel(SpendingForecast forecast, List<UnusualSpendingInsight> unusual) {

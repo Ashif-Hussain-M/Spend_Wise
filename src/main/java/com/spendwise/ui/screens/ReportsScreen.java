@@ -11,6 +11,7 @@ import com.spendwise.service.ReportService;
 import com.spendwise.service.SpendingAnalysisService;
 import com.spendwise.ui.components.AsyncWorker;
 import com.spendwise.ui.components.ChartPanel;
+import com.spendwise.ui.components.ScrollablePanel;
 import com.spendwise.ui.components.SectionHeader;
 import com.spendwise.ui.components.StyledButton;
 import com.spendwise.ui.components.StyledComboBox;
@@ -25,6 +26,7 @@ import com.spendwise.util.MoneyUtil;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import java.awt.Component;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -60,6 +62,7 @@ public class ReportsScreen extends JPanel implements BaseScreen {
     private int currentYear;
     private int currentMonth;
 
+    private final ScrollablePanel content;
     private final SummaryCard incomeCard;
     private final SummaryCard expenseCard;
     private final SummaryCard savingsCard;
@@ -90,12 +93,13 @@ public class ReportsScreen extends JPanel implements BaseScreen {
         setLayout(new BorderLayout());
         setBackground(AppTheme.BG_DARK);
 
-        JPanel content = new JPanel();
+        content = new ScrollablePanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
         content.setBorder(new EmptyBorder(8, 0, 24, 0));
 
         SectionHeader header = new SectionHeader("Financial Analytics & Reports", "Aggregated insights, monthly comparisons, CSV export, and what-if simulator");
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         StyledButton exportBtn = new StyledButton("Export CSV", StyledButton.ButtonStyle.SECONDARY);
         exportBtn.addActionListener(e -> exportCsv());
@@ -105,7 +109,9 @@ public class ReportsScreen extends JPanel implements BaseScreen {
 
         JPanel cardsPanel = new JPanel(new GridLayout(1, 4, 16, 0));
         cardsPanel.setOpaque(false);
-        cardsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 115));
+        cardsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cardsPanel.setPreferredSize(new Dimension(800, 115));
+        cardsPanel.setMaximumSize(new Dimension(3000, 115));
 
         incomeCard = new SummaryCard("TOTAL INCOME", "Rs 0.00", "Selected Month", AppIcons.add(18, AppTheme.SUCCESS), AppTheme.SUCCESS);
         expenseCard = new SummaryCard("TOTAL EXPENSES", "Rs 0.00", "Selected Month", AppIcons.delete(18, AppTheme.DANGER), AppTheme.DANGER);
@@ -122,8 +128,9 @@ public class ReportsScreen extends JPanel implements BaseScreen {
 
         JPanel chartsPanel = new JPanel(new GridLayout(1, 2, 16, 0));
         chartsPanel.setOpaque(false);
-        chartsPanel.setPreferredSize(new Dimension(Integer.MAX_VALUE, 280));
-        chartsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 280));
+        chartsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        chartsPanel.setPreferredSize(new Dimension(800, 280));
+        chartsPanel.setMaximumSize(new Dimension(3000, 280));
 
         categoryChart = new ChartPanel();
         historyChart = new ChartPanel();
@@ -135,6 +142,7 @@ public class ReportsScreen extends JPanel implements BaseScreen {
         content.add(Box.createVerticalStrut(20));
 
         SectionHeader breakdownHeader = new SectionHeader("Category Spending Breakdown", "SQL-aggregated breakdown by volume and percentage");
+        breakdownHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(breakdownHeader);
 
         String[] cols = {"Category", "Type", "Transactions", "Total Amount", "Share of Spending"};
@@ -147,25 +155,29 @@ public class ReportsScreen extends JPanel implements BaseScreen {
 
         breakdownTable = new StyledTable(breakdownModel);
         JScrollPane tableScroll = new JScrollPane(breakdownTable);
+        tableScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         tableScroll.setBackground(AppTheme.CARD_BG);
         tableScroll.getViewport().setBackground(AppTheme.CARD_BG);
         tableScroll.setBorder(BorderFactory.createLineBorder(AppTheme.CARD_BORDER, 1));
-        tableScroll.setPreferredSize(new Dimension(Integer.MAX_VALUE, 180));
-        tableScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
+        tableScroll.setPreferredSize(new Dimension(800, 180));
+        tableScroll.setMaximumSize(new Dimension(3000, 220));
         content.add(tableScroll);
 
         content.add(Box.createVerticalStrut(24));
 
         SectionHeader simHeader = new SectionHeader("What-If Spending Simulator", "Interactive calculation of potential savings by reducing category expenses (pure calculation, never writes to DB)");
+        simHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(simHeader);
 
         JPanel simCard = new JPanel(new BorderLayout(16, 12));
         simCard.setBackground(AppTheme.CARD_BG);
+        simCard.setAlignmentX(Component.LEFT_ALIGNMENT);
         simCard.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(AppTheme.CARD_BORDER, 1),
                 new EmptyBorder(16, 20, 16, 20)
         ));
-        simCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        simCard.setPreferredSize(new Dimension(800, 110));
+        simCard.setMaximumSize(new Dimension(3000, 120));
 
         JPanel simControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         simControls.setOpaque(false);
@@ -212,9 +224,18 @@ public class ReportsScreen extends JPanel implements BaseScreen {
         scrollPane.setOpaque(false);
         scrollPane.getViewport().setOpaque(false);
         scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         add(scrollPane, BorderLayout.CENTER);
+
+        loadReportData();
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        loadReportData();
     }
 
     @Override
@@ -280,6 +301,8 @@ public class ReportsScreen extends JPanel implements BaseScreen {
         }
 
         resetSimulation();
+        content.revalidate();
+        content.repaint();
     }
 
     private void runSimulation() {
