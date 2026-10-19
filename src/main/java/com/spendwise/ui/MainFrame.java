@@ -10,6 +10,7 @@ import com.spendwise.ui.components.AsyncWorker;
 import com.spendwise.ui.components.StyledButton;
 import com.spendwise.ui.components.StyledComboBox;
 import com.spendwise.ui.screens.BaseScreen;
+import com.spendwise.ui.screens.WelcomeScreen;
 import com.spendwise.ui.theme.AppIcons;
 import com.spendwise.ui.theme.AppTheme;
 
@@ -81,11 +82,15 @@ public class MainFrame extends JFrame {
         setPreferredSize(new Dimension(1200, 800));
         setLocationRelativeTo(null);
 
-        JPanel root = new JPanel(new BorderLayout());
-        root.setBackground(AppTheme.BG_DARK);
+        CardLayout rootCardLayout = new CardLayout();
+        JPanel rootContainer = new JPanel(rootCardLayout);
+        rootContainer.setBackground(AppTheme.BG_DARK);
+
+        JPanel appShell = new JPanel(new BorderLayout());
+        appShell.setBackground(AppTheme.BG_DARK);
 
         JPanel sidebar = buildSidebar();
-        root.add(sidebar, BorderLayout.WEST);
+        appShell.add(sidebar, BorderLayout.WEST);
 
         JPanel mainArea = new JPanel(new BorderLayout());
         mainArea.setBackground(AppTheme.BG_DARK);
@@ -118,9 +123,18 @@ public class MainFrame extends JFrame {
         contentPanel.setBorder(new EmptyBorder(12, 24, 20, 24));
 
         mainArea.add(contentPanel, BorderLayout.CENTER);
-        root.add(mainArea, BorderLayout.CENTER);
+        appShell.add(mainArea, BorderLayout.CENTER);
 
-        setContentPane(root);
+        WelcomeScreen welcomeScreen = new WelcomeScreen(() -> {
+            rootCardLayout.show(rootContainer, "APP_SHELL");
+            showScreen("DASHBOARD");
+        });
+
+        rootContainer.add(welcomeScreen, "WELCOME");
+        rootContainer.add(appShell, "APP_SHELL");
+
+        setContentPane(rootContainer);
+        rootCardLayout.show(rootContainer, "WELCOME");
 
         monthCombo.addActionListener(e -> onDateChanged());
         yearCombo.addActionListener(e -> onDateChanged());
