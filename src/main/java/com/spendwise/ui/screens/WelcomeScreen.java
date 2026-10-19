@@ -1,12 +1,12 @@
 package com.spendwise.ui.screens;
 
 import com.spendwise.ui.components.StyledButton;
-import com.spendwise.ui.theme.AppIcons;
 import com.spendwise.ui.theme.AppTheme;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -17,6 +17,7 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -24,15 +25,10 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
-import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
-import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -42,250 +38,416 @@ public class WelcomeScreen extends JPanel implements HierarchyListener {
     private final Runnable onOpenDashboard;
     private final Timer animationTimer;
     private final List<Particle> particles = new ArrayList<>();
-    private final Point mousePos = new Point(400, 300);
 
-    private float entranceAlpha = 0.0f;
     private float wavePhase = 0.0f;
-    private boolean featuresVisible = false;
-    private final JPanel featuresContainer;
+    private float demoChartProgress = 0.0f;
+    private boolean demoApproved = false;
 
     public WelcomeScreen(Runnable onOpenDashboard) {
         this.onOpenDashboard = onOpenDashboard;
         setLayout(new BorderLayout());
         setBackground(AppTheme.BG_DARK);
 
-        initParticles(35);
+        initParticles(30);
 
         animationTimer = new Timer(33, e -> {
-            if (AppTheme.isReduceAnimations()) {
-                entranceAlpha = 1.0f;
-                repaint();
-                return;
-            }
-
-            if (entranceAlpha < 1.0f) {
-                entranceAlpha = Math.min(1.0f, entranceAlpha + 0.04f);
-            }
-            wavePhase += 0.03f;
-
-            for (Particle p : particles) {
-                p.update(getWidth(), getHeight());
+            if (!AppTheme.isReduceAnimations()) {
+                wavePhase += 0.03f;
+                if (demoChartProgress < 1.0f) {
+                    demoChartProgress = Math.min(1.0f, demoChartProgress + 0.02f);
+                }
+                for (Particle p : particles) {
+                    p.update(getWidth(), getHeight());
+                }
             }
             repaint();
         });
 
         addHierarchyListener(this);
 
-        addMouseMotionListener(new MouseAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                mousePos.setLocation(e.getPoint());
-            }
-        });
+        JPanel mainLayout = new JPanel(new BorderLayout());
+        mainLayout.setOpaque(false);
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setOpaque(false);
-        content.setBorder(new EmptyBorder(40, 60, 40, 60));
+        JPanel topNav = buildTopNav();
+        mainLayout.add(topNav, BorderLayout.NORTH);
 
-        JPanel brandPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                int size = 64;
-                int x = (getWidth() - size) / 2;
-                int y = 0;
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel.setOpaque(false);
+        centerPanel.setBorder(new EmptyBorder(24, 40, 24, 40));
 
-                g2.setColor(new Color(0x10, 0xB9, 0x81, 40));
-                g2.fillOval(x - 8, y - 8, size + 16, size + 16);
+        JPanel heroGrid = new JPanel(new GridLayout(1, 2, 36, 0));
+        heroGrid.setOpaque(false);
+        heroGrid.setAlignmentX(Component.CENTER_ALIGNMENT);
+        heroGrid.setMaximumSize(new Dimension(1160, 420));
+        heroGrid.setPreferredSize(new Dimension(1100, 420));
 
-                g2.setColor(AppTheme.PRIMARY_ACCENT);
-                Path2D.Float diamond = new Path2D.Float();
-                diamond.moveTo(x + size / 2f, y);
-                diamond.lineTo(x + size, y + size / 2f);
-                diamond.lineTo(x + size / 2f, y + size);
-                diamond.lineTo(x, y + size / 2f);
-                diamond.closePath();
-                g2.fill(diamond);
+        JPanel leftHero = buildLeftHero();
+        JPanel rightDemo = buildRightDemoCard();
 
-                g2.setColor(Color.WHITE);
-                g2.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-                g2.drawLine(x + size / 2, y + 16, x + size / 2, y + size - 16);
-                g2.drawLine(x + 16, y + size / 2, x + size - 16, y + size / 2);
-                g2.dispose();
-            }
-        };
-        brandPanel.setOpaque(false);
-        brandPanel.setPreferredSize(new Dimension(80, 72));
-        brandPanel.setMaximumSize(new Dimension(80, 72));
-        brandPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        content.add(brandPanel);
+        heroGrid.add(leftHero);
+        heroGrid.add(rightDemo);
+        centerPanel.add(heroGrid);
 
-        content.add(Box.createVerticalStrut(16));
+        centerPanel.add(Box.createVerticalStrut(28));
 
-        JLabel titleLabel = new JLabel("SpendWise");
-        titleLabel.setFont(new Font("Helvetica Neue", Font.BOLD, 36));
-        titleLabel.setForeground(AppTheme.TEXT_PRIMARY);
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        content.add(titleLabel);
+        JPanel chaptersPanel = buildChaptersPanel();
+        chaptersPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        chaptersPanel.setMaximumSize(new Dimension(1160, 110));
+        chaptersPanel.setPreferredSize(new Dimension(1100, 110));
+        centerPanel.add(chaptersPanel);
 
-        content.add(Box.createVerticalStrut(8));
-
-        JLabel taglineLabel = new JLabel("Your money. Your clarity.");
-        taglineLabel.setFont(new Font("Helvetica Neue", Font.BOLD, 20));
-        taglineLabel.setForeground(AppTheme.PRIMARY_ACCENT);
-        taglineLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        content.add(taglineLabel);
-
-        content.add(Box.createVerticalStrut(14));
-
-        JLabel descLabel = new JLabel("<html><center style='width: 520px;'>" +
-                "A complete, database-backed personal finance workstation built for real-world clarity. " +
-                "Track expenses, monitor budget utilization, detect unusual spending, and run what-if simulations." +
-                "</center></html>");
-        descLabel.setFont(AppTheme.FONT_BODY);
-        descLabel.setForeground(AppTheme.TEXT_SECONDARY);
-        descLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        content.add(descLabel);
-
-        content.add(Box.createVerticalStrut(28));
-
-        JPanel ctaPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 0));
-        ctaPanel.setOpaque(false);
-        ctaPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        StyledButton openBtn = new StyledButton("Open My Dashboard", StyledButton.ButtonStyle.PRIMARY);
-        openBtn.setPreferredSize(new Dimension(200, 44));
-        openBtn.setFont(new Font("Helvetica Neue", Font.BOLD, 14));
-        openBtn.addActionListener(e -> {
-            stopAnimation();
-            if (this.onOpenDashboard != null) {
-                this.onOpenDashboard.run();
-            }
-        });
-
-        StyledButton exploreBtn = new StyledButton("Explore Features", StyledButton.ButtonStyle.SECONDARY);
-        exploreBtn.setPreferredSize(new Dimension(170, 44));
-        exploreBtn.addActionListener(e -> toggleFeatures());
-
-        ctaPanel.add(openBtn);
-        ctaPanel.add(exploreBtn);
-        content.add(ctaPanel);
-
-        content.add(Box.createVerticalStrut(32));
-
-        featuresContainer = buildFeaturesPanel();
-        featuresContainer.setAlignmentX(Component.CENTER_ALIGNMENT);
-        featuresContainer.setVisible(false);
-        content.add(featuresContainer);
-
-        content.add(Box.createVerticalGlue());
-
-        JLabel footerLabel = new JLabel("SpendWise v1.0.0 • Java 21 & MySQL 8 • AIML Engineering College Project");
-        footerLabel.setFont(AppTheme.FONT_SMALL);
-        footerLabel.setForeground(AppTheme.TEXT_MUTED);
-        footerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        content.add(footerLabel);
-
-        JScrollPane scrollPane = new JScrollPane(content);
+        JScrollPane scrollPane = new JScrollPane(centerPanel);
         scrollPane.setOpaque(false);
         scrollPane.getViewport().setOpaque(false);
         scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-        add(scrollPane, BorderLayout.CENTER);
+        mainLayout.add(scrollPane, BorderLayout.CENTER);
+        add(mainLayout, BorderLayout.CENTER);
     }
 
-    private JPanel buildFeaturesPanel() {
-        JPanel panel = new JPanel(new GridLayout(1, 3, 16, 0));
-        panel.setOpaque(false);
-        panel.setMaximumSize(new Dimension(880, 150));
-        panel.setPreferredSize(new Dimension(880, 150));
-
-        panel.add(createFeatureCard(
-                "Precise Tracking",
-                "Transaction integrity guaranteed by composite foreign keys and strict database constraints.",
-                AppTheme.PRIMARY_ACCENT
+    private JPanel buildTopNav() {
+        JPanel nav = new JPanel(new BorderLayout());
+        nav.setBackground(new Color(0x05, 0x07, 0x0A, 220));
+        nav.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, AppTheme.CARD_BORDER),
+                new EmptyBorder(14, 36, 14, 36)
         ));
 
-        panel.add(createFeatureCard(
-                "Dynamic Budgets",
-                "Real-time utilization tracking with warning thresholds and safe over-budget calculation.",
-                AppTheme.BLUE_ACCENT
-        ));
+        JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        brand.setOpaque(false);
 
-        panel.add(createFeatureCard(
-                "Actionable Insights",
-                "Rule-based detection of unusual spending spikes, forecasting, and what-if savings simulation.",
-                AppTheme.TEAL_ACCENT
-        ));
-
-        return panel;
-    }
-
-    private JPanel createFeatureCard(String title, String desc, Color accent) {
-        JPanel card = new JPanel() {
+        JPanel logoMark = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(AppTheme.CARD_BG);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.setColor(AppTheme.SECONDARY_ACCENT);
+                g2.fillOval(2, 2, 22, 22);
+                g2.setColor(AppTheme.TEXT_PRIMARY);
+                g2.setStroke(new BasicStroke(1.6f));
+                g2.drawLine(2, 13, 24, 13);
+                g2.drawLine(13, 2, 13, 24);
+                g2.dispose();
+            }
+        };
+        logoMark.setPreferredSize(new Dimension(26, 26));
+        logoMark.setOpaque(false);
+
+        JLabel brandName = new JLabel("SpendWise");
+        brandName.setFont(new Font("Onest", Font.BOLD, 16));
+        brandName.setForeground(AppTheme.TEXT_PRIMARY);
+
+        JLabel brandSub = new JLabel("· Financial Decision Engine");
+        brandSub.setFont(new Font("JetBrains Mono", Font.PLAIN, 11));
+        brandSub.setForeground(AppTheme.TEXT_MUTED);
+
+        brand.add(logoMark);
+        brand.add(brandName);
+        brand.add(brandSub);
+
+        JPanel rightLinks = new JPanel(new FlowLayout(FlowLayout.RIGHT, 18, 0));
+        rightLinks.setOpaque(false);
+
+        StyledButton dashBtn = new StyledButton("Open Dashboard →", StyledButton.ButtonStyle.PRIMARY);
+        dashBtn.setPreferredSize(new Dimension(160, 36));
+        dashBtn.addActionListener(e -> launchDashboard());
+
+        rightLinks.add(createNavLink("01 One View"));
+        rightLinks.add(createNavLink("02 Spot Problems"));
+        rightLinks.add(createNavLink("03 Explain Why"));
+        rightLinks.add(createNavLink("04 Act & Plan"));
+        rightLinks.add(dashBtn);
+
+        nav.add(brand, BorderLayout.WEST);
+        nav.add(rightLinks, BorderLayout.EAST);
+        return nav;
+    }
+
+    private JLabel createNavLink(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(new Font("JetBrains Mono", Font.PLAIN, 10));
+        l.setForeground(AppTheme.TEXT_MUTED);
+        l.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return l;
+    }
+
+    private JPanel buildLeftHero() {
+        JPanel left = new JPanel();
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+        left.setOpaque(false);
+        left.setBorder(new EmptyBorder(12, 0, 12, 0));
+
+        JPanel kicker = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        kicker.setOpaque(false);
+        JLabel dot = new JLabel("●");
+        dot.setFont(new Font("SansSerif", Font.BOLD, 9));
+        dot.setForeground(AppTheme.SECONDARY_ACCENT);
+        JLabel kickerText = new JLabel("COLLEGE PROJECT · AIML SEM 4");
+        kickerText.setFont(new Font("JetBrains Mono", Font.BOLD, 10));
+        kickerText.setForeground(AppTheme.TEXT_MUTED);
+        kicker.add(dot);
+        kicker.add(kickerText);
+
+        JLabel h1 = new JLabel("<html><body style='width: 480px;'>" +
+                "<span style='color:#dfe7e0; font-size:32px; font-weight:700;'>Find the leaks.<br>Fuel the savings.</span>" +
+                "</body></html>");
+        h1.setFont(AppTheme.FONT_HERO);
+
+        JLabel sub = new JLabel("<html><body style='width: 450px; line-height: 1.6;'>" +
+                "SpendWise connects your income, expense categories and monthly budgets, " +
+                "spots what's wasting money, explains why with rule-based baselines, and tells you where to save next." +
+                "</body></html>");
+        sub.setFont(AppTheme.FONT_BODY);
+        sub.setForeground(AppTheme.TEXT_SECONDARY);
+
+        JPanel ctas = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        ctas.setOpaque(false);
+
+        StyledButton openBtn = new StyledButton("Open Dashboard →", StyledButton.ButtonStyle.PRIMARY);
+        openBtn.setPreferredSize(new Dimension(170, 42));
+        openBtn.addActionListener(e -> launchDashboard());
+
+        StyledButton howBtn = new StyledButton("See How It Works", StyledButton.ButtonStyle.SECONDARY);
+        howBtn.setPreferredSize(new Dimension(150, 42));
+        howBtn.addActionListener(e -> launchDashboard());
+
+        ctas.add(openBtn);
+        ctas.add(howBtn);
+
+        left.add(kicker);
+        left.add(Box.createVerticalStrut(14));
+        left.add(h1);
+        left.add(Box.createVerticalStrut(14));
+        left.add(sub);
+        left.add(Box.createVerticalStrut(24));
+        left.add(ctas);
+        return left;
+    }
+
+    private JPanel buildRightDemoCard() {
+        JPanel card = new JPanel(new BorderLayout(0, 10)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gp = new GradientPaint(
+                        0, 0, new Color(0x13, 0x19, 0x20),
+                        getWidth(), getHeight(), new Color(0x0A, 0x0E, 0x12)
+                );
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
                 g2.setColor(AppTheme.CARD_BORDER);
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
-                g2.setColor(accent);
-                g2.fillRoundRect(16, 16, 24, 4, 2, 2);
+                g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
-        card.setBorder(new EmptyBorder(26, 16, 16, 16));
+        card.setBorder(new EmptyBorder(16, 18, 16, 18));
 
-        JLabel titleLbl = new JLabel(title);
-        titleLbl.setFont(AppTheme.FONT_SUBHEADER);
-        titleLbl.setForeground(AppTheme.TEXT_PRIMARY);
+        JPanel head = new JPanel(new BorderLayout());
+        head.setOpaque(false);
+        JLabel title = new JLabel("Travel & Commute · College Fest Run Rate");
+        title.setFont(new Font("Onest", Font.BOLD, 13));
+        title.setForeground(AppTheme.TEXT_PRIMARY);
 
-        JLabel descLbl = new JLabel("<html><body style='width: 220px;'>" + desc + "</body></html>");
-        descLbl.setFont(AppTheme.FONT_SMALL);
-        descLbl.setForeground(AppTheme.TEXT_SECONDARY);
+        JPanel pill = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
+        pill.setOpaque(false);
+        JLabel pDot = new JLabel("●");
+        pDot.setFont(new Font("SansSerif", Font.BOLD, 8));
+        pDot.setForeground(AppTheme.SECONDARY_ACCENT);
+        JLabel pTxt = new JLabel("Live example");
+        pTxt.setFont(new Font("JetBrains Mono", Font.PLAIN, 10));
+        pTxt.setForeground(AppTheme.TEXT_MUTED);
+        pill.add(pDot);
+        pill.add(pTxt);
 
-        card.add(titleLbl);
-        card.add(Box.createVerticalStrut(6));
-        card.add(descLbl);
+        head.add(title, BorderLayout.WEST);
+        head.add(pill, BorderLayout.EAST);
+        card.add(head, BorderLayout.NORTH);
 
+        JPanel chart = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth();
+                int h = getHeight();
+
+                g2.setColor(new Color(0x27, 0x30, 0x3B));
+                g2.drawLine(20, h - 20, w - 20, h - 20);
+                g2.drawLine(20, 20, w - 20, 20);
+
+                Path2D.Float baseline = new Path2D.Float();
+                baseline.moveTo(20, h - 45);
+                baseline.curveTo(w * 0.3f, h - 50, w * 0.6f, h - 40, w - 20, h - 48);
+                g2.setColor(new Color(0xDF, 0xE7, 0xE0, 180));
+                g2.setStroke(new BasicStroke(1.8f));
+                g2.draw(baseline);
+
+                Path2D.Float spike = new Path2D.Float();
+                spike.moveTo(20, h - 45);
+                spike.lineTo(w * 0.45f, h - 45);
+                spike.curveTo(w * 0.6f, h - 85, w * 0.75f, 25, w - 20, 28);
+                g2.setColor(AppTheme.SECONDARY_ACCENT);
+                g2.setStroke(new BasicStroke(2.2f));
+                g2.draw(spike);
+
+                if (demoApproved) {
+                    g2.setColor(AppTheme.PRIMARY_ACCENT);
+                    g2.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{4, 4}, 0));
+                    g2.drawLine((int) (w * 0.6f), h - 45, w - 20, h - 45);
+                }
+
+                g2.setFont(new Font("JetBrains Mono", Font.PLAIN, 9));
+                g2.setColor(AppTheme.TEXT_MUTED);
+                g2.drawString("Oct 1", 20, h - 6);
+                g2.drawString("Oct 19", (int) (w * 0.55f), h - 6);
+                g2.drawString("Oct 31", w - 50, h - 6);
+                g2.dispose();
+            }
+        };
+        chart.setOpaque(false);
+        chart.setPreferredSize(new Dimension(420, 110));
+        card.add(chart, BorderLayout.CENTER);
+
+        JPanel alertStack = new JPanel();
+        alertStack.setLayout(new BoxLayout(alertStack, BoxLayout.Y_AXIS));
+        alertStack.setOpaque(false);
+
+        JPanel alert1 = createDemoAlert("Deviation detected", "Category run-rate at 126% over 3-month baseline; leaking ₹2,500/day.", AppTheme.SECONDARY_ACCENT);
+        JPanel recCard = new JPanel(new BorderLayout(8, 0));
+        recCard.setBackground(AppTheme.CARD_RAISE);
+        recCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(AppTheme.CARD_BORDER, 1),
+                new EmptyBorder(8, 12, 8, 12)
+        ));
+
+        JPanel recLeft = new JPanel();
+        recLeft.setLayout(new BoxLayout(recLeft, BoxLayout.Y_AXIS));
+        recLeft.setOpaque(false);
+        JLabel rT = new JLabel("Cap category expenses until month end");
+        rT.setFont(AppTheme.FONT_BODY_BOLD);
+        rT.setForeground(AppTheme.TEXT_PRIMARY);
+        JLabel rS = new JLabel("Protects ~₹2,500 buffer balance");
+        rS.setFont(AppTheme.FONT_SMALL);
+        rS.setForeground(AppTheme.PRIMARY_ACCENT);
+        recLeft.add(rT);
+        recLeft.add(rS);
+
+        JButton approveBtn = new JButton(demoApproved ? "✓ Approved" : "Approve");
+        approveBtn.setFont(new Font("JetBrains Mono", Font.BOLD, 10));
+        approveBtn.setBackground(demoApproved ? AppTheme.PRIMARY_ACCENT : AppTheme.TEXT_PRIMARY);
+        approveBtn.setForeground(AppTheme.BG_DARK);
+        approveBtn.setPreferredSize(new Dimension(100, 32));
+        approveBtn.setFocusPainted(false);
+        approveBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        approveBtn.addActionListener(e -> {
+            demoApproved = true;
+            approveBtn.setText("✓ Approved");
+            approveBtn.setBackground(AppTheme.PRIMARY_ACCENT);
+            card.repaint();
+        });
+
+        recCard.add(recLeft, BorderLayout.CENTER);
+        recCard.add(approveBtn, BorderLayout.EAST);
+
+        alertStack.add(alert1);
+        alertStack.add(Box.createVerticalStrut(6));
+        alertStack.add(recCard);
+
+        card.add(alertStack, BorderLayout.SOUTH);
         return card;
     }
 
-    private void toggleFeatures() {
-        featuresVisible = !featuresVisible;
-        featuresContainer.setVisible(featuresVisible);
-        revalidate();
-        repaint();
+    private JPanel createDemoAlert(String title, String desc, Color dotColor) {
+        JPanel p = new JPanel(new BorderLayout(6, 2));
+        p.setBackground(AppTheme.CARD_RAISE);
+        p.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(dotColor.getRed(), dotColor.getGreen(), dotColor.getBlue(), 80), 1),
+                new EmptyBorder(6, 10, 6, 10)
+        ));
+
+        JLabel t = new JLabel(title);
+        t.setFont(AppTheme.FONT_BODY_BOLD);
+        t.setForeground(dotColor);
+
+        JLabel d = new JLabel(desc);
+        d.setFont(AppTheme.FONT_SMALL);
+        d.setForeground(AppTheme.TEXT_SECONDARY);
+
+        p.add(t, BorderLayout.NORTH);
+        p.add(d, BorderLayout.SOUTH);
+        return p;
     }
 
-    @Override
-    public void hierarchyChanged(HierarchyEvent e) {
-        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
-            if (isShowing()) {
-                startAnimation();
-            } else {
-                stopAnimation();
-            }
+    private JPanel buildChaptersPanel() {
+        JPanel panel = new JPanel(new GridLayout(1, 4, 16, 0));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, AppTheme.CARD_BORDER),
+                new EmptyBorder(16, 0, 0, 0)
+        ));
+
+        panel.add(createChapterChip("01", "One view", "Cashflow, categories & budgets unified in MySQL."));
+        panel.add(createChapterChip("02", "Spot problems", "Statistical spikes & unusual category deviation."));
+        panel.add(createChapterChip("03", "Explain why", "3-month rolling baseline over elapsed days."));
+        panel.add(createChapterChip("04", "Act & learn", "Interactive What-If simulation slider."));
+        return panel;
+    }
+
+    private JPanel createChapterChip(String num, String title, String desc) {
+        JPanel chip = new JPanel();
+        chip.setLayout(new BoxLayout(chip, BoxLayout.Y_AXIS));
+        chip.setOpaque(false);
+        chip.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        top.setOpaque(false);
+
+        JLabel n = new JLabel(num);
+        n.setFont(new Font("JetBrains Mono", Font.BOLD, 18));
+        n.setForeground(AppTheme.TEXT_PRIMARY);
+
+        JLabel t = new JLabel(title);
+        t.setFont(new Font("Onest", Font.BOLD, 13));
+        t.setForeground(AppTheme.TEXT_PRIMARY);
+
+        top.add(n);
+        top.add(t);
+
+        JLabel d = new JLabel("<html><body style='width: 200px;'>" + desc + "</body></html>");
+        d.setFont(AppTheme.FONT_SMALL);
+        d.setForeground(AppTheme.TEXT_MUTED);
+
+        chip.add(top);
+        chip.add(Box.createVerticalStrut(2));
+        chip.add(d);
+        return chip;
+    }
+
+    private void launchDashboard() {
+        stopAnimation();
+        if (onOpenDashboard != null) {
+            onOpenDashboard.run();
         }
     }
 
-    private void startAnimation() {
-        if (!animationTimer.isRunning()) {
-            animationTimer.start();
-        }
-    }
-
-    private void stopAnimation() {
-        if (animationTimer.isRunning()) {
-            animationTimer.stop();
+    private void initParticles(int count) {
+        particles.clear();
+        Random r = new Random();
+        for (int i = 0; i < count; i++) {
+            particles.add(new Particle(
+                    r.nextFloat() * 1200,
+                    r.nextFloat() * 800,
+                    r.nextFloat() * 1.6f + 0.4f,
+                    (r.nextFloat() - 0.5f) * 0.4f,
+                    (r.nextFloat() - 0.5f) * 0.4f,
+                    r.nextFloat() * 0.3f + 0.08f
+            ));
         }
     }
 
@@ -295,105 +457,68 @@ public class WelcomeScreen extends JPanel implements HierarchyListener {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int w = getWidth();
-        int h = getHeight();
-
-        GradientPaint bgGradient = new GradientPaint(
-                0, 0, new Color(0x08, 0x0C, 0x16),
-                w, h, new Color(0x10, 0x17, 0x28)
+        GradientPaint radial = new GradientPaint(
+                getWidth() * 0.8f, 0, new Color(0x17, 0x1F, 0x28, 120),
+                getWidth() * 0.2f, getHeight(), new Color(0x05, 0x07, 0x0A)
         );
-        g2.setPaint(bgGradient);
-        g2.fillRect(0, 0, w, h);
+        g2.setPaint(radial);
+        g2.fillRect(0, 0, getWidth(), getHeight());
 
-        if (!AppTheme.isReduceAnimations()) {
-            paintCursorGlow(g2);
-            paintFinancialWave(g2, w, h);
-            paintParticles(g2);
+        g2.setColor(new Color(0xDF, 0xE7, 0xE0, 6));
+        for (int x = 0; x < getWidth(); x += 64) {
+            g2.drawLine(x, 0, x, getHeight());
+        }
+        for (int y = 0; y < getHeight(); y += 64) {
+            g2.drawLine(0, y, getWidth(), y);
+        }
+
+        for (Particle p : particles) {
+            p.draw(g2);
         }
 
         g2.dispose();
     }
 
-    private void paintCursorGlow(Graphics2D g2) {
-        if (mousePos != null) {
-            Graphics2D gGlow = (Graphics2D) g2.create();
-            int radius = 180;
-            gGlow.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.12f));
-            gGlow.setColor(AppTheme.PRIMARY_ACCENT);
-            gGlow.fillOval(mousePos.x - radius, mousePos.y - radius, radius * 2, radius * 2);
-            gGlow.dispose();
+    @Override
+    public void hierarchyChanged(HierarchyEvent e) {
+        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+            if (isShowing()) {
+                animationTimer.start();
+            } else {
+                animationTimer.stop();
+            }
         }
     }
 
-    private void paintFinancialWave(Graphics2D g2, int w, int h) {
-        Graphics2D gWave = (Graphics2D) g2.create();
-        gWave.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        gWave.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.18f));
-        gWave.setStroke(new BasicStroke(2.0f));
-
-        GeneralPath wave1 = new GeneralPath();
-        float baseY = h * 0.72f;
-        wave1.moveTo(0, baseY);
-
-        for (int x = 0; x <= w; x += 30) {
-            float y = (float) (baseY + Math.sin((x * 0.005f) + wavePhase) * 35.0
-                    + Math.cos((x * 0.002f) + wavePhase * 0.5f) * 20.0);
-            wave1.lineTo(x, y);
-        }
-
-        gWave.setColor(AppTheme.TEAL_ACCENT);
-        gWave.draw(wave1);
-        gWave.dispose();
-    }
-
-    private void paintParticles(Graphics2D g2) {
-        Graphics2D gp = (Graphics2D) g2.create();
-        gp.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        for (Particle p : particles) {
-            gp.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, p.alpha));
-            gp.setColor(p.color);
-            gp.fillOval((int) p.x, (int) p.y, (int) p.size, (int) p.size);
-        }
-        gp.dispose();
-    }
-
-    private void initParticles(int count) {
-        Random rnd = new Random(42);
-        for (int i = 0; i < count; i++) {
-            particles.add(new Particle(
-                    rnd.nextFloat() * 1200,
-                    rnd.nextFloat() * 800,
-                    rnd.nextFloat() * 3 + 1.5f,
-                    rnd.nextFloat() * 0.4f + 0.1f,
-                    rnd.nextFloat() * 0.3f + 0.1f,
-                    rnd.nextBoolean() ? AppTheme.PRIMARY_ACCENT : AppTheme.BLUE_ACCENT
-            ));
+    public void stopAnimation() {
+        if (animationTimer != null && animationTimer.isRunning()) {
+            animationTimer.stop();
         }
     }
 
     private static class Particle {
-        float x;
-        float y;
-        float size;
-        float speedY;
-        float alpha;
-        Color color;
+        float x, y, radius, vx, vy, alpha;
 
-        Particle(float x, float y, float size, float speedY, float alpha, Color color) {
+        Particle(float x, float y, float radius, float vx, float vy, float alpha) {
             this.x = x;
             this.y = y;
-            this.size = size;
-            this.speedY = speedY;
+            this.radius = radius;
+            this.vx = vx;
+            this.vy = vy;
             this.alpha = alpha;
-            this.color = color;
         }
 
-        void update(int width, int height) {
-            y -= speedY;
-            if (y < -10) {
-                y = height + 10;
-                x = (float) (Math.random() * width);
-            }
+        void update(int boundsX, int boundsY) {
+            x += vx;
+            y += vy;
+            if (boundsX > 0 && (x < 0 || x > boundsX)) vx = -vx;
+            if (boundsY > 0 && (y < 0 || y > boundsY)) vy = -vy;
+        }
+
+        void draw(Graphics2D g2) {
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2.setColor(new Color(0xDF, 0xE7, 0xE0));
+            g2.fillOval((int) x, (int) y, (int) radius * 2, (int) radius * 2);
         }
     }
 }

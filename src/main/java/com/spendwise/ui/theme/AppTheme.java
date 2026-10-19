@@ -8,40 +8,45 @@ import java.awt.Font;
 
 public final class AppTheme {
 
-    public static final Color BG_DARK = new Color(0x0B, 0x0F, 0x19);
-    public static final Color SIDEBAR_BG = new Color(0x0E, 0x14, 0x24);
-    public static final Color CARD_BG = new Color(0x15, 0x1D, 0x2E);
-    public static final Color CARD_BG_HOVER = new Color(0x1B, 0x25, 0x3B);
-    public static final Color CARD_BORDER = new Color(0x23, 0x30, 0x4A);
+    public static final Color BG_DARK = new Color(0x05, 0x07, 0x0A);
+    public static final Color SIDEBAR_BG = new Color(0x0A, 0x0E, 0x12);
+    public static final Color CARD_BG = new Color(0x10, 0x16, 0x1D);
+    public static final Color CARD_RAISE = new Color(0x17, 0x1F, 0x28);
+    public static final Color CARD_BG_HOVER = new Color(0x1A, 0x21, 0x2A);
+    public static final Color CARD_BORDER = new Color(0x27, 0x30, 0x3B);
 
-    public static final Color PRIMARY_ACCENT = new Color(0x10, 0xB9, 0x81);
-    public static final Color PRIMARY_ACCENT_HOVER = new Color(0x05, 0x96, 0x69);
+    public static final Color PRIMARY_ACCENT = new Color(0x3F, 0xB6, 0x8B);
+    public static final Color PRIMARY_ACCENT_HOVER = new Color(0x34, 0xD3, 0x99);
+    public static final Color SECONDARY_ACCENT = new Color(0xE0, 0x23, 0x1C);
+    public static final Color EMBER = new Color(0xFF, 0x5A, 0x3C);
     public static final Color BLUE_ACCENT = new Color(0x3B, 0x82, 0xF6);
-    public static final Color TEAL_ACCENT = new Color(0x06, 0xB6, 0xD4);
+    public static final Color TEAL_ACCENT = new Color(0x10, 0xB9, 0x81);
 
-    public static final Color SUCCESS = new Color(0x10, 0xB9, 0x81);
-    public static final Color DANGER = new Color(0xEF, 0x44, 0x44);
+    public static final Color SUCCESS = new Color(0x3F, 0xB6, 0x8B);
+    public static final Color DANGER = new Color(0xE0, 0x23, 0x1C);
     public static final Color WARNING = new Color(0xF5, 0x9E, 0x0B);
 
-    public static final Color TEXT_PRIMARY = new Color(0xF3, 0xF4, 0xF6);
-    public static final Color TEXT_SECONDARY = new Color(0x9C, 0xA3, 0xAF);
-    public static final Color TEXT_MUTED = new Color(0x6B, 0x72, 0x80);
+    public static final Color TEXT_PRIMARY = new Color(0xDF, 0xE7, 0xE0);
+    public static final Color TEXT_SECONDARY = new Color(0xAA, 0xB4, 0xAD);
+    public static final Color TEXT_MUTED = new Color(0x78, 0x83, 0x7C);
 
-    public static final Color INPUT_BG = new Color(0x11, 0x18, 0x27);
-    public static final Color INPUT_BORDER = new Color(0x37, 0x41, 0x51);
-    public static final Color INPUT_FOCUS = new Color(0x3B, 0x82, 0xF6);
+    public static final Color INPUT_BG = new Color(0x0A, 0x0E, 0x12);
+    public static final Color INPUT_BORDER = new Color(0x27, 0x30, 0x3B);
+    public static final Color INPUT_FOCUS = new Color(0xE0, 0x23, 0x1C);
 
-    public static final Color TABLE_HEADER_BG = new Color(0x11, 0x18, 0x27);
-    public static final Color TABLE_ROW_ALT = new Color(0x13, 0x1A, 0x2A);
-    public static final Color TABLE_SELECTION = new Color(0x1E, 0x29, 0x3B);
+    public static final Color TABLE_HEADER_BG = new Color(0x0A, 0x0E, 0x12);
+    public static final Color TABLE_ROW_ALT = new Color(0x0E, 0x13, 0x1A);
+    public static final Color TABLE_SELECTION = new Color(0x1A, 0x21, 0x2A);
 
-    public static final Font FONT_TITLE = new Font("Helvetica Neue", Font.BOLD, 22);
-    public static final Font FONT_HEADER = new Font("Helvetica Neue", Font.BOLD, 17);
-    public static final Font FONT_SUBHEADER = new Font("Helvetica Neue", Font.BOLD, 14);
-    public static final Font FONT_BODY = new Font("Helvetica Neue", Font.PLAIN, 13);
-    public static final Font FONT_BODY_BOLD = new Font("Helvetica Neue", Font.BOLD, 13);
-    public static final Font FONT_SMALL = new Font("Helvetica Neue", Font.PLAIN, 11);
-    public static final Font FONT_KPI = new Font("Helvetica Neue", Font.BOLD, 26);
+    public static final Font FONT_HERO = new Font("Onest", Font.BOLD, 38);
+    public static final Font FONT_TITLE = new Font("Onest", Font.BOLD, 22);
+    public static final Font FONT_HEADER = new Font("Onest", Font.BOLD, 16);
+    public static final Font FONT_SUBHEADER = new Font("Onest", Font.BOLD, 13);
+    public static final Font FONT_BODY = new Font("Onest", Font.PLAIN, 13);
+    public static final Font FONT_BODY_BOLD = new Font("Onest", Font.BOLD, 13);
+    public static final Font FONT_SMALL = new Font("JetBrains Mono", Font.PLAIN, 11);
+    public static final Font FONT_MONO_BOLD = new Font("JetBrains Mono", Font.BOLD, 11);
+    public static final Font FONT_KPI = new Font("JetBrains Mono", Font.BOLD, 26);
 
     private static boolean reduceAnimations = false;
 

@@ -29,6 +29,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -214,40 +215,54 @@ public class MainFrame extends JFrame {
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setBackground(AppTheme.SIDEBAR_BG);
-        sidebar.setPreferredSize(new Dimension(240, 0));
+        sidebar.setPreferredSize(new Dimension(250, 0));
         sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, AppTheme.CARD_BORDER));
 
         JPanel brandPanel = new JPanel();
         brandPanel.setLayout(new BoxLayout(brandPanel, BoxLayout.Y_AXIS));
         brandPanel.setOpaque(false);
-        brandPanel.setBorder(new EmptyBorder(24, 20, 24, 20));
+        brandPanel.setBorder(new EmptyBorder(24, 20, 20, 20));
 
-        JLabel brandTitle = new JLabel("SpendWise");
-        brandTitle.setFont(AppTheme.FONT_TITLE);
-        brandTitle.setForeground(AppTheme.PRIMARY_ACCENT);
+        JLabel brandTitle = new JLabel("SPENDWISE // ENGINE");
+        brandTitle.setFont(AppTheme.FONT_HEADER);
+        brandTitle.setForeground(AppTheme.TEXT_PRIMARY);
 
-        JLabel brandTagline = new JLabel("Your money. Your clarity.");
+        JLabel brandTagline = new JLabel("Autonomous cashflow engine");
         brandTagline.setFont(AppTheme.FONT_SMALL);
-        brandTagline.setForeground(AppTheme.TEXT_SECONDARY);
+        brandTagline.setForeground(AppTheme.TEXT_MUTED);
+
+        JPanel statusPill = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        statusPill.setOpaque(false);
+        JLabel dot = new JLabel("●");
+        dot.setFont(new Font("SansSerif", Font.BOLD, 9));
+        dot.setForeground(AppTheme.PRIMARY_ACCENT);
+        JLabel statusText = new JLabel("DEMO SESSION ACTIVE");
+        statusText.setFont(new Font("JetBrains Mono", Font.BOLD, 9));
+        statusText.setForeground(AppTheme.PRIMARY_ACCENT);
+        statusPill.add(dot);
+        statusPill.add(statusText);
 
         brandPanel.add(brandTitle);
         brandPanel.add(Box.createVerticalStrut(4));
         brandPanel.add(brandTagline);
+        brandPanel.add(Box.createVerticalStrut(8));
+        brandPanel.add(statusPill);
 
         sidebar.add(brandPanel);
+        sidebar.add(Box.createVerticalStrut(8));
 
-        addNavButton(sidebar, "DASHBOARD", "Dashboard", AppIcons.dashboard(18, null));
-        addNavButton(sidebar, "TRANSACTIONS", "Transactions", AppIcons.transactions(18, null));
-        addNavButton(sidebar, "CATEGORIES", "Categories", AppIcons.categories(18, null));
-        addNavButton(sidebar, "BUDGETS", "Budgets", AppIcons.budgets(18, null));
-        addNavButton(sidebar, "REPORTS", "Reports", AppIcons.reports(18, null));
-        addNavButton(sidebar, "SETTINGS", "Settings", AppIcons.settings(18, null));
+        addNavButton(sidebar, "DASHBOARD", "Decision Center", "1 P1", AppIcons.dashboard(16, null));
+        addNavButton(sidebar, "TRANSACTIONS", "Cashflow Ledger", null, AppIcons.transactions(16, null));
+        addNavButton(sidebar, "CATEGORIES", "Category Control", null, AppIcons.categories(16, null));
+        addNavButton(sidebar, "BUDGETS", "Guardrails & Limits", null, AppIcons.budgets(16, null));
+        addNavButton(sidebar, "REPORTS", "Profit & What-If", null, AppIcons.reports(16, null));
+        addNavButton(sidebar, "SETTINGS", "Engine Preferences", null, AppIcons.settings(16, null));
 
         sidebar.add(Box.createVerticalGlue());
 
         JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 16));
         footerPanel.setOpaque(false);
-        JLabel versionLabel = new JLabel("v1.0.0 • Java 21");
+        JLabel versionLabel = new JLabel("v1.0.0 • Java 21 + MySQL");
         versionLabel.setFont(AppTheme.FONT_SMALL);
         versionLabel.setForeground(AppTheme.TEXT_MUTED);
         footerPanel.add(versionLabel);
@@ -256,30 +271,44 @@ public class MainFrame extends JFrame {
         return sidebar;
     }
 
-    private void addNavButton(JPanel sidebar, String screenKey, String label, Icon icon) {
-        NavButton btn = new NavButton(screenKey, label, icon);
+    private void addNavButton(JPanel sidebar, String screenKey, String label, String tag, Icon icon) {
+        NavButton btn = new NavButton(screenKey, label, tag, icon);
         navButtons.add(btn);
         sidebar.add(btn);
-        sidebar.add(Box.createVerticalStrut(4));
+        sidebar.add(Box.createVerticalStrut(2));
     }
 
     private JPanel buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
-        header.setOpaque(false);
-        header.setBorder(new EmptyBorder(18, 24, 12, 24));
+        header.setBackground(AppTheme.SIDEBAR_BG);
+        header.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, AppTheme.CARD_BORDER),
+                new EmptyBorder(14, 24, 14, 24)
+        ));
 
-        header.add(headerTitleLabel, BorderLayout.WEST);
+        JPanel breadcrumb = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        breadcrumb.setOpaque(false);
+        JLabel prefix = new JLabel("SPENDWISE /");
+        prefix.setFont(new Font("JetBrains Mono", Font.PLAIN, 11));
+        prefix.setForeground(AppTheme.TEXT_MUTED);
+        headerTitleLabel.setFont(new Font("JetBrains Mono", Font.BOLD, 12));
+        headerTitleLabel.setForeground(AppTheme.TEXT_PRIMARY);
+        breadcrumb.add(prefix);
+        breadcrumb.add(headerTitleLabel);
+
+        header.add(breadcrumb, BorderLayout.WEST);
 
         JPanel controls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         controls.setOpaque(false);
 
+        dbStatusLabel.setFont(new Font("JetBrains Mono", Font.PLAIN, 11));
         controls.add(dbStatusLabel);
         controls.add(Box.createHorizontalStrut(8));
         controls.add(monthCombo);
         controls.add(yearCombo);
 
-        JButton refreshBtn = new JButton(AppIcons.refresh(16, AppTheme.TEXT_PRIMARY));
-        refreshBtn.setPreferredSize(new Dimension(36, 36));
+        JButton refreshBtn = new JButton(AppIcons.refresh(14, AppTheme.TEXT_PRIMARY));
+        refreshBtn.setPreferredSize(new Dimension(34, 34));
         refreshBtn.setBackground(AppTheme.CARD_BG);
         refreshBtn.setBorder(BorderFactory.createLineBorder(AppTheme.CARD_BORDER, 1));
         refreshBtn.setFocusPainted(false);
@@ -294,12 +323,12 @@ public class MainFrame extends JFrame {
 
     private String getScreenTitle(String key) {
         return switch (key) {
-            case "DASHBOARD" -> "Dashboard";
-            case "TRANSACTIONS" -> "Transactions";
-            case "CATEGORIES" -> "Category Management";
-            case "BUDGETS" -> "Budgets & Spending Limits";
-            case "REPORTS" -> "Financial Reports & Insights";
-            case "SETTINGS" -> "Preferences & Diagnostics";
+            case "DASHBOARD" -> "Decision Center";
+            case "TRANSACTIONS" -> "Cashflow Ledger";
+            case "CATEGORIES" -> "Category Control";
+            case "BUDGETS" -> "Guardrails & Limits";
+            case "REPORTS" -> "Profit & What-If";
+            case "SETTINGS" -> "Engine Preferences";
             default -> "SpendWise";
         };
     }
@@ -310,21 +339,28 @@ public class MainFrame extends JFrame {
         private boolean active = false;
         private boolean hovered = false;
 
-        public NavButton(String screenKey, String text, Icon icon) {
+        public NavButton(String screenKey, String text, String tag, Icon icon) {
             this.screenKey = screenKey;
-            setLayout(new BorderLayout(12, 0));
+            setLayout(new BorderLayout(10, 0));
             setOpaque(false);
-            setMaximumSize(new Dimension(240, 42));
-            setPreferredSize(new Dimension(240, 42));
+            setMaximumSize(new Dimension(250, 40));
+            setPreferredSize(new Dimension(250, 40));
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setBorder(new EmptyBorder(8, 20, 8, 20));
+            setBorder(new EmptyBorder(8, 18, 8, 16));
 
-            label = new JLabel(text, icon, JLabel.LEFT);
-            label.setIconTextGap(12);
-            label.setFont(AppTheme.FONT_BODY_BOLD);
-            label.setForeground(AppTheme.TEXT_SECONDARY);
+            label = new JLabel(text.toUpperCase(), icon, JLabel.LEFT);
+            label.setIconTextGap(10);
+            label.setFont(new Font("JetBrains Mono", Font.PLAIN, 11));
+            label.setForeground(AppTheme.TEXT_MUTED);
 
             add(label, BorderLayout.CENTER);
+
+            if (tag != null) {
+                JLabel tagLabel = new JLabel(tag);
+                tagLabel.setFont(new Font("JetBrains Mono", Font.BOLD, 10));
+                tagLabel.setForeground(AppTheme.SECONDARY_ACCENT);
+                add(tagLabel, BorderLayout.EAST);
+            }
 
             addMouseListener(new MouseAdapter() {
                 @Override
@@ -348,7 +384,7 @@ public class MainFrame extends JFrame {
 
         public void setActive(boolean active) {
             this.active = active;
-            label.setForeground(active ? AppTheme.TEXT_PRIMARY : AppTheme.TEXT_SECONDARY);
+            label.setForeground(active ? AppTheme.TEXT_PRIMARY : AppTheme.TEXT_MUTED);
             repaint();
         }
 
@@ -358,13 +394,13 @@ public class MainFrame extends JFrame {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             if (active) {
-                g2.setColor(AppTheme.CARD_BG);
-                g2.fillRoundRect(8, 2, getWidth() - 16, getHeight() - 4, 8, 8);
-                g2.setColor(AppTheme.PRIMARY_ACCENT);
-                g2.fillRoundRect(8, 8, 4, getHeight() - 16, 2, 2);
+                g2.setColor(AppTheme.CARD_RAISE);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.setColor(AppTheme.SECONDARY_ACCENT);
+                g2.fillRect(0, 0, 3, getHeight());
             } else if (hovered) {
-                g2.setColor(new Color(255, 255, 255, 10));
-                g2.fillRoundRect(8, 2, getWidth() - 16, getHeight() - 4, 8, 8);
+                g2.setColor(new Color(255, 255, 255, 8));
+                g2.fillRect(0, 0, getWidth(), getHeight());
             }
 
             g2.dispose();
