@@ -42,9 +42,13 @@ public final class DatabaseConnection {
         if (env != null && !env.isBlank()) {
             return env;
         }
-        return testMode
-                ? PROPERTIES.getProperty("db.test.url", "jdbc:mysql://localhost:3306/spendwise_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC")
-                : PROPERTIES.getProperty("db.url", "jdbc:mysql://localhost:3306/spendwise?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
+        if (testMode) {
+            String testUrl = PROPERTIES.getProperty("db.test.url");
+            if (testUrl != null && !testUrl.isBlank()) {
+                return testUrl;
+            }
+        }
+        return PROPERTIES.getProperty("db.url", "jdbc:mysql://localhost:3306/spendwise?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
     }
 
     public static String getUser() {
@@ -52,9 +56,13 @@ public final class DatabaseConnection {
         if (env != null && !env.isBlank()) {
             return env;
         }
-        return testMode
-                ? PROPERTIES.getProperty("db.test.user", "spendwise_app")
-                : PROPERTIES.getProperty("db.user", "spendwise_app");
+        if (testMode) {
+            String testUser = PROPERTIES.getProperty("db.test.user");
+            if (testUser != null && !testUser.isBlank()) {
+                return testUser;
+            }
+        }
+        return PROPERTIES.getProperty("db.user", "spendwise_app");
     }
 
     public static String getPassword() {
@@ -62,9 +70,13 @@ public final class DatabaseConnection {
         if (env != null) {
             return env;
         }
-        return testMode
-                ? PROPERTIES.getProperty("db.test.password", "")
-                : PROPERTIES.getProperty("db.password", "");
+        if (testMode) {
+            String testPass = PROPERTIES.getProperty("db.test.password");
+            if (testPass != null && !testPass.isBlank()) {
+                return testPass;
+            }
+        }
+        return PROPERTIES.getProperty("db.password", "");
     }
 
     public static Connection getConnection() throws SQLException {
