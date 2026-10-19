@@ -60,9 +60,10 @@ public class Toast extends JPanel {
         add(label, BorderLayout.CENTER);
 
         dismissTimer = new Timer(3200, e -> {
-            if (getParent() != null) {
-                getParent().remove(this);
-                getParent().repaint();
+            java.awt.Container parent = getParent();
+            if (parent != null) {
+                parent.remove(this);
+                parent.repaint();
             }
         });
         dismissTimer.setRepeats(false);
