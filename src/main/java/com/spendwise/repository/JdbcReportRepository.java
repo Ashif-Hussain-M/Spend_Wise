@@ -232,16 +232,21 @@ public class JdbcReportRepository implements ReportRepository {
 
     @Override
     public BigDecimal getCategorySpendingInDateRange(Long userId, Long categoryId, LocalDate startDate, LocalDate endDate) {
+        boolean hasCategory = (categoryId != null);
         String sql = "SELECT COALESCE(SUM(amount), 0) AS total_spent " +
                 "FROM transactions " +
-                "WHERE user_id = ? AND category_id = ? AND transaction_date >= ? AND transaction_date <= ? " +
+                "WHERE user_id = ? " + (hasCategory ? "AND category_id = ? " : "") +
+                "AND transaction_date >= ? AND transaction_date <= ? " +
                 "AND transaction_type = 'EXPENSE'";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, userId);
-            ps.setLong(2, categoryId);
-            ps.setDate(3, Date.valueOf(startDate));
-            ps.setDate(4, Date.valueOf(endDate));
+            int idx = 1;
+            ps.setLong(idx++, userId);
+            if (hasCategory) {
+                ps.setLong(idx++, categoryId);
+            }
+            ps.setDate(idx++, Date.valueOf(startDate));
+            ps.setDate(idx++, Date.valueOf(endDate));
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return MoneyUtil.of(rs.getBigDecimal("total_spent"));
@@ -255,18 +260,22 @@ public class JdbcReportRepository implements ReportRepository {
 
     @Override
     public BigDecimal getCategorySpendingInElapsedDayWindow(Long userId, Long categoryId, int year, int month, int maxDayOfMonth) {
+        boolean hasCategory = (categoryId != null);
         String sql = "SELECT COALESCE(SUM(amount), 0) AS total_spent " +
                 "FROM transactions " +
-                "WHERE user_id = ? AND category_id = ? " +
+                "WHERE user_id = ? " + (hasCategory ? "AND category_id = ? " : "") +
                 "AND YEAR(transaction_date) = ? AND MONTH(transaction_date) = ? " +
                 "AND DAY(transaction_date) <= ? AND transaction_type = 'EXPENSE'";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, userId);
-            ps.setLong(2, categoryId);
-            ps.setInt(3, year);
-            ps.setInt(4, month);
-            ps.setInt(5, maxDayOfMonth);
+            int idx = 1;
+            ps.setLong(idx++, userId);
+            if (hasCategory) {
+                ps.setLong(idx++, categoryId);
+            }
+            ps.setInt(idx++, year);
+            ps.setInt(idx++, month);
+            ps.setInt(idx++, maxDayOfMonth);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return MoneyUtil.of(rs.getBigDecimal("total_spent"));
