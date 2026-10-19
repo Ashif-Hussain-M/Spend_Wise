@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # SpendWise: Your money. Your clarity.
 
 A complete, database-backed personal finance management desktop workstation built for a second-year AIML engineering college project.
@@ -360,3 +361,6 @@ java -jar target/spendwise-1.0.0.jar
 
 - **Demo Script**: See [DEMO_SCRIPT.md](file:///Users/ashif/.gemini/antigravity/scratch/spendwise/DEMO_SCRIPT.md) for the complete 8-minute presentation script divided between both team members.
 - **Viva Preparation**: See [VIVA_GUIDE.md](file:///Users/ashif/.gemini/antigravity/scratch/spendwise/VIVA_GUIDE.md) for 40 detailed viva questions and answers, OOP table, and DBMS query mapping.
+=======
+# Spend_Wise
+>>>>>>> 0a7dc99bd198d541d363d3c49084fe2898a310ef
