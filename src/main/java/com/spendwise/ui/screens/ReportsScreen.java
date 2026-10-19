@@ -32,6 +32,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -76,6 +77,7 @@ public class ReportsScreen extends JPanel implements BaseScreen {
     private final List<CategorySpending> currentBreakdown = new ArrayList<>();
 
     private final StyledComboBox<CategoryItem> simCategoryCombo;
+    private final JSlider simSlider;
     private final StyledTextField simPercentField;
     private final JLabel simSavingsLabel;
     private final JLabel simBalanceLabel;
@@ -183,10 +185,30 @@ public class ReportsScreen extends JPanel implements BaseScreen {
         simControls.setOpaque(false);
 
         simCategoryCombo = new StyledComboBox<>();
-        simCategoryCombo.setPreferredSize(new Dimension(200, 36));
+        simCategoryCombo.setPreferredSize(new Dimension(180, 36));
+        simCategoryCombo.addActionListener(e -> runSimulation());
 
-        simPercentField = new StyledTextField("Reduction % (e.g. 25)", 10);
+        simSlider = new JSlider(0, 100, 25);
+        simSlider.setOpaque(false);
+        simSlider.setPreferredSize(new Dimension(140, 32));
+
+        simPercentField = new StyledTextField(4);
         simPercentField.setText("25");
+
+        simSlider.addChangeListener(e -> {
+            simPercentField.setText(String.valueOf(simSlider.getValue()));
+            runSimulation();
+        });
+
+        simPercentField.addActionListener(e -> {
+            try {
+                int val = Integer.parseInt(simPercentField.getText().trim());
+                if (val >= 0 && val <= 100) {
+                    simSlider.setValue(val);
+                }
+            } catch (Exception ignored) {
+            }
+        });
 
         StyledButton simCalculateBtn = new StyledButton("Simulate", StyledButton.ButtonStyle.PRIMARY);
         simCalculateBtn.addActionListener(e -> runSimulation());
@@ -194,10 +216,12 @@ public class ReportsScreen extends JPanel implements BaseScreen {
         StyledButton simResetBtn = new StyledButton("Reset", StyledButton.ButtonStyle.GHOST);
         simResetBtn.addActionListener(e -> resetSimulation());
 
-        simControls.add(new JLabel("Target Category:"));
+        simControls.add(new JLabel("Target:"));
         simControls.add(simCategoryCombo);
         simControls.add(new JLabel("Reduction:"));
+        simControls.add(simSlider);
         simControls.add(simPercentField);
+        simControls.add(new JLabel("%"));
         simControls.add(simCalculateBtn);
         simControls.add(simResetBtn);
 
@@ -332,6 +356,8 @@ public class ReportsScreen extends JPanel implements BaseScreen {
     }
 
     private void resetSimulation() {
+        simSlider.setValue(25);
+        simPercentField.setText("25");
         simSavingsLabel.setText("Potential Savings: Rs 0.00");
         simBalanceLabel.setText("Projected New Expense: " + MoneyUtil.formatRupees(currentExpenseTotal));
     }

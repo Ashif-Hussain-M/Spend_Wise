@@ -4,10 +4,15 @@ import com.spendwise.model.CategorySpending;
 import com.spendwise.model.MonthComparison;
 import com.spendwise.ui.theme.AppTheme;
 import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartMouseEvent;
+import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.block.BlockBorder;
+import org.jfree.chart.entity.CategoryItemEntity;
+import org.jfree.chart.entity.ChartEntity;
+import org.jfree.chart.entity.PieSectionEntity;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.chart.plot.PlotOrientation;
@@ -19,6 +24,7 @@ import org.jfree.data.general.DefaultPieDataset;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -41,6 +47,9 @@ public class ChartPanel extends JPanel {
             new Color(0x63, 0x66, 0xF1)
     };
 
+    private Timer currentTimer;
+    private Timer explodeTimer;
+
     public ChartPanel() {
         setLayout(new BorderLayout());
         setBackground(AppTheme.CARD_BG);
@@ -51,7 +60,14 @@ public class ChartPanel extends JPanel {
         setPreferredSize(new Dimension(400, 260));
     }
 
+    private void stopActiveTimer() {
+        if (currentTimer != null && currentTimer.isRunning()) {
+            currentTimer.stop();
+        }
+    }
+
     public void displayCategoryPieChart(String title, List<CategorySpending> data) {
+        stopActiveTimer();
         removeAll();
         if (data == null || data.isEmpty()) {
             add(new EmptyStatePanel("No Expense Data", "Record expenses to see category breakdown.", null, null), BorderLayout.CENTER);
@@ -62,7 +78,7 @@ public class ChartPanel extends JPanel {
 
         DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
         for (CategorySpending cs : data) {
-            dataset.setValue(cs.categoryName(), cs.totalAmount().doubleValue());
+            dataset.setValue(cs.categoryName(), 0.001);
         }
 
         JFreeChart chart = ChartFactory.createPieChart(title, dataset, true, true, false);
@@ -87,12 +103,78 @@ public class ChartPanel extends JPanel {
         org.jfree.chart.ChartPanel jfreePanel = new org.jfree.chart.ChartPanel(chart);
         jfreePanel.setBackground(AppTheme.CARD_BG);
         jfreePanel.setOpaque(true);
+
+        jfreePanel.addChartMouseListener(new ChartMouseListener() {
+            @Override
+            public void chartMouseClicked(ChartMouseEvent event) {
+                ChartEntity entity = event.getEntity();
+                if (entity instanceof PieSectionEntity pieEntity) {
+                    String key = pieEntity.getSectionKey().toString();
+                    animatePieExplode(plot, key, data);
+                }
+            }
+
+            @Override
+            public void chartMouseMoved(ChartMouseEvent event) {
+            }
+        });
+
         add(jfreePanel, BorderLayout.CENTER);
         revalidate();
         repaint();
+
+        final int totalFrames = 22;
+        final int[] currentFrame = {0};
+        currentTimer = new Timer(16, e -> {
+            currentFrame[0]++;
+            float progress = (float) currentFrame[0] / totalFrames;
+            if (progress >= 1.0f) {
+                progress = 1.0f;
+                ((Timer) e.getSource()).stop();
+            }
+            float eased = 1.0f - (float) Math.pow(1.0f - progress, 3);
+            for (CategorySpending cs : data) {
+                double target = cs.totalAmount().doubleValue();
+                dataset.setValue(cs.categoryName(), Math.max(0.001, target * eased));
+            }
+        });
+        currentTimer.start();
+    }
+
+    private void animatePieExplode(PiePlot<String> plot, String clickedKey, List<CategorySpending> data) {
+        if (explodeTimer != null && explodeTimer.isRunning()) {
+            explodeTimer.stop();
+        }
+
+        double currentExplode = plot.getExplodePercent(clickedKey);
+        boolean shouldRetract = currentExplode > 0.04;
+        double targetExplode = shouldRetract ? 0.0 : 0.16;
+
+        for (CategorySpending cs : data) {
+            if (!cs.categoryName().equals(clickedKey.toString())) {
+                plot.setExplodePercent(cs.categoryName(), 0.0);
+            }
+        }
+
+        final int frames = 10;
+        final int[] frame = {0};
+        final double start = currentExplode;
+        explodeTimer = new Timer(16, ev -> {
+            frame[0]++;
+            float t = (float) frame[0] / frames;
+            if (t >= 1.0f) {
+                t = 1.0f;
+                ((Timer) ev.getSource()).stop();
+            }
+            float eased = 1.0f - (float) Math.pow(1.0f - t, 2);
+            double val = start + (targetExplode - start) * eased;
+            plot.setExplodePercent(clickedKey, val);
+        });
+        explodeTimer.start();
     }
 
     public void displayIncomeVsExpenseBarChart(String title, List<MonthComparison> history) {
+        stopActiveTimer();
         removeAll();
         if (history == null || history.isEmpty()) {
             add(new EmptyStatePanel("No Monthly History", "Add transactions across months to compare.", null, null), BorderLayout.CENTER);
@@ -104,8 +186,8 @@ public class ChartPanel extends JPanel {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
         for (MonthComparison mc : history) {
             String monthName = Month.of(mc.month()).getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
-            dataset.addValue(mc.income().doubleValue(), "Income", monthName);
-            dataset.addValue(mc.expense().doubleValue(), "Expense", monthName);
+            dataset.addValue(0.0, "Income", monthName);
+            dataset.addValue(0.0, "Expense", monthName);
         }
 
         JFreeChart chart = ChartFactory.createBarChart(
@@ -139,9 +221,80 @@ public class ChartPanel extends JPanel {
         org.jfree.chart.ChartPanel jfreePanel = new org.jfree.chart.ChartPanel(chart);
         jfreePanel.setBackground(AppTheme.CARD_BG);
         jfreePanel.setOpaque(true);
+
+        jfreePanel.addChartMouseListener(new ChartMouseListener() {
+            @Override
+            public void chartMouseClicked(ChartMouseEvent event) {
+                ChartEntity entity = event.getEntity();
+                if (entity instanceof CategoryItemEntity catEntity) {
+                    animateBarPulse(dataset, history, catEntity.getColumnKey());
+                }
+            }
+
+            @Override
+            public void chartMouseMoved(ChartMouseEvent event) {
+            }
+        });
+
         add(jfreePanel, BorderLayout.CENTER);
         revalidate();
         repaint();
+
+        final int totalFrames = 22;
+        final int[] currentFrame = {0};
+        currentTimer = new Timer(16, e -> {
+            currentFrame[0]++;
+            float progress = (float) currentFrame[0] / totalFrames;
+            if (progress >= 1.0f) {
+                progress = 1.0f;
+                ((Timer) e.getSource()).stop();
+            }
+            float eased = 1.0f - (float) Math.pow(1.0f - progress, 3);
+            for (MonthComparison mc : history) {
+                String monthName = Month.of(mc.month()).getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+                dataset.setValue(mc.income().doubleValue() * eased, "Income", monthName);
+                dataset.setValue(mc.expense().doubleValue() * eased, "Expense", monthName);
+            }
+        });
+        currentTimer.start();
+    }
+
+    private void animateBarPulse(DefaultCategoryDataset dataset, List<MonthComparison> history, Object clickedColumn) {
+        String colStr = clickedColumn != null ? clickedColumn.toString() : "";
+        MonthComparison match = null;
+        for (MonthComparison mc : history) {
+            String monthName = Month.of(mc.month()).getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+            if (monthName.equalsIgnoreCase(colStr)) {
+                match = mc;
+                break;
+            }
+        }
+        if (match == null) {
+            return;
+        }
+
+        final MonthComparison target = match;
+        final String colName = Month.of(target.month()).getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+        final double baseIncome = target.income().doubleValue();
+        final double baseExpense = target.expense().doubleValue();
+
+        final int frames = 12;
+        final int[] frame = {0};
+        Timer pulseTimer = new Timer(16, null);
+        pulseTimer.addActionListener(e -> {
+            frame[0]++;
+            float t = (float) frame[0] / frames;
+            if (t >= 1.0f) {
+                dataset.setValue(baseIncome, "Income", colName);
+                dataset.setValue(baseExpense, "Expense", colName);
+                ((Timer) e.getSource()).stop();
+                return;
+            }
+            double bump = Math.sin(t * Math.PI) * 0.12;
+            dataset.setValue(baseIncome * (1.0 + bump), "Income", colName);
+            dataset.setValue(baseExpense * (1.0 + bump), "Expense", colName);
+        });
+        pulseTimer.start();
     }
 
     private void styleChart(JFreeChart chart) {

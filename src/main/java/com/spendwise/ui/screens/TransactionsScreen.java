@@ -1,5 +1,6 @@
 package com.spendwise.ui.screens;
 
+import com.spendwise.service.ValidationException;
 import com.spendwise.model.Category;
 import com.spendwise.model.CategoryType;
 import com.spendwise.model.Transaction;
@@ -38,6 +39,8 @@ import java.awt.GridLayout;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -339,7 +342,8 @@ public class TransactionsScreen extends JPanel implements BaseScreen {
         StyledComboBox<String> typeCombo = new StyledComboBox<>(new String[]{"EXPENSE", "INCOME"});
         StyledComboBox<CategoryItem> catCombo = new StyledComboBox<>();
         StyledTextField amountInput = new StyledTextField(10);
-        StyledTextField dateInput = new StyledTextField(LocalDate.now().toString(), 10);
+        StyledTextField dateInput = new StyledTextField(10);
+        dateInput.setText(LocalDate.now().toString());
         StyledTextField descInput = new StyledTextField(15);
         JLabel validationMsg = new JLabel("");
         validationMsg.setFont(AppTheme.FONT_SMALL);
@@ -413,9 +417,36 @@ public class TransactionsScreen extends JPanel implements BaseScreen {
                     return;
                 }
 
-                BigDecimal amt = MoneyUtil.parse(amountInput.getText());
-                LocalDate d = LocalDate.parse(dateInput.getText().trim());
+                String amtStr = amountInput.getText().trim();
+                if (amtStr.isEmpty()) {
+                    validationMsg.setText("Please enter an amount.");
+                    return;
+                }
+                BigDecimal amt;
+                try {
+                    amt = MoneyUtil.parse(amtStr);
+                    if (amt.compareTo(BigDecimal.ZERO) <= 0) {
+                        validationMsg.setText("Amount must be greater than zero.");
+                        return;
+                    }
+                } catch (Exception ex) {
+                    validationMsg.setText("Please enter a valid numeric amount.");
+                    return;
+                }
+
+                LocalDate d;
+                try {
+                    d = parseDate(dateInput.getText());
+                } catch (ValidationException ex) {
+                    validationMsg.setText(ex.getMessage());
+                    return;
+                }
+
                 String desc = descInput.getText().trim();
+                if (desc.isEmpty()) {
+                    validationMsg.setText("Please enter a description.");
+                    return;
+                }
 
                 if (existing == null) {
                     AsyncWorker.execute(
@@ -447,9 +478,31 @@ public class TransactionsScreen extends JPanel implements BaseScreen {
         buttonPanel.add(saveBtn);
         dlg.add(buttonPanel, BorderLayout.SOUTH);
 
+        dlg.setPreferredSize(new Dimension(480, 410));
         dlg.pack();
         dlg.setLocationRelativeTo(topFrame);
         dlg.setVisible(true);
+    }
+
+    private LocalDate parseDate(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            throw new ValidationException("Please enter a transaction date.");
+        }
+        String s = input.trim();
+        List<DateTimeFormatter> formatters = List.of(
+                DateTimeFormatter.ISO_LOCAL_DATE,
+                DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+                DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+                DateTimeFormatter.ofPattern("yyyy/MM/dd"),
+                DateTimeFormatter.ofPattern("dd.MM.yyyy")
+        );
+        for (DateTimeFormatter dtf : formatters) {
+            try {
+                return LocalDate.parse(s, dtf);
+            } catch (DateTimeParseException ignored) {
+            }
+        }
+        throw new ValidationException("Invalid date format. Please use YYYY-MM-DD or DD-MM-YYYY.");
     }
 
     private void showToast(String message, Toast.ToastType type) {

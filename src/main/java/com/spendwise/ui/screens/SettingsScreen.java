@@ -72,9 +72,12 @@ public class SettingsScreen extends JPanel implements BaseScreen {
         JPanel grid = new JPanel(new GridLayout(3, 2, 14, 12));
         grid.setOpaque(false);
 
-        warningThresholdField = new StyledTextField(String.valueOf((int) reportService.getWarningThresholdPercent()), 8);
-        unusualThresholdField = new StyledTextField(String.valueOf((int) analysisService.getUnusualSpendingThresholdPercent()), 8);
-        minIncreaseField = new StyledTextField(analysisService.getMinAbsoluteIncrease().toPlainString(), 8);
+        warningThresholdField = new StyledTextField(8);
+        warningThresholdField.setText(String.valueOf((int) reportService.getWarningThresholdPercent()));
+        unusualThresholdField = new StyledTextField(8);
+        unusualThresholdField.setText(String.valueOf((int) analysisService.getUnusualSpendingThresholdPercent()));
+        minIncreaseField = new StyledTextField(8);
+        minIncreaseField.setText(analysisService.getMinAbsoluteIncrease().toPlainString());
 
         grid.add(new JLabel("Budget Warning Threshold (%):"));
         grid.add(warningThresholdField);
