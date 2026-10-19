@@ -61,6 +61,10 @@ public class SummaryCard extends JPanel {
         valueLabel.setText(value);
     }
 
+    public String getValue() {
+        return valueLabel.getText();
+    }
+
     public void setSubtitle(String subtitle) {
         subtitleLabel.setText(subtitle);
     }
