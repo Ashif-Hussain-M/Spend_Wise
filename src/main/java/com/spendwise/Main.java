@@ -17,6 +17,7 @@ import com.spendwise.ui.MainFrame;
 import com.spendwise.ui.screens.BudgetsScreen;
 import com.spendwise.ui.screens.CategoriesScreen;
 import com.spendwise.ui.screens.DashboardScreen;
+import com.spendwise.server.SpendWiseWebServer;
 import com.spendwise.ui.screens.ReportsScreen;
 import com.spendwise.ui.screens.SettingsScreen;
 import com.spendwise.ui.screens.TransactionsScreen;
@@ -27,19 +28,22 @@ import javax.swing.SwingUtilities;
 public class Main {
 
     public static void main(String[] args) {
+        CategoryRepository categoryRepo = new JdbcCategoryRepository();
+        TransactionRepository transactionRepo = new JdbcTransactionRepository();
+        BudgetRepository budgetRepo = new JdbcBudgetRepository();
+        ReportRepository reportRepo = new JdbcReportRepository();
+
+        CategoryService categoryService = new CategoryService(categoryRepo);
+        TransactionService transactionService = new TransactionService(transactionRepo, categoryRepo);
+        BudgetService budgetService = new BudgetService(budgetRepo, categoryRepo);
+        ReportService reportService = new ReportService(reportRepo);
+        SpendingAnalysisService analysisService = new SpendingAnalysisService(reportRepo, categoryRepo);
+
+        SpendWiseWebServer webServer = new SpendWiseWebServer(8080, categoryService, transactionService, budgetService, reportService, analysisService);
+        webServer.start();
+
         SwingUtilities.invokeLater(() -> {
             AppTheme.setup();
-
-            CategoryRepository categoryRepo = new JdbcCategoryRepository();
-            TransactionRepository transactionRepo = new JdbcTransactionRepository();
-            BudgetRepository budgetRepo = new JdbcBudgetRepository();
-            ReportRepository reportRepo = new JdbcReportRepository();
-
-            CategoryService categoryService = new CategoryService(categoryRepo);
-            TransactionService transactionService = new TransactionService(transactionRepo, categoryRepo);
-            BudgetService budgetService = new BudgetService(budgetRepo, categoryRepo);
-            ReportService reportService = new ReportService(reportRepo);
-            SpendingAnalysisService analysisService = new SpendingAnalysisService(reportRepo, categoryRepo);
 
             MainFrame frame = new MainFrame(categoryService, transactionService, budgetService, reportService, analysisService);
 

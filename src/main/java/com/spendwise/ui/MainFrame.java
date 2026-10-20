@@ -27,6 +27,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -35,6 +36,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.net.URI;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.format.TextStyle;
@@ -316,6 +318,25 @@ public class MainFrame extends JFrame {
         refreshBtn.setToolTipText("Refresh data");
         refreshBtn.addActionListener(e -> refreshCurrentScreen());
         controls.add(refreshBtn);
+
+        JButton webBtn = new JButton("Web: 8080");
+        webBtn.setPreferredSize(new Dimension(85, 34));
+        webBtn.setFont(new Font("JetBrains Mono", Font.BOLD, 10));
+        webBtn.setBackground(new Color(16, 185, 129, 25));
+        webBtn.setForeground(AppTheme.PRIMARY_ACCENT);
+        webBtn.setBorder(BorderFactory.createLineBorder(new Color(16, 185, 129, 80), 1));
+        webBtn.setFocusPainted(false);
+        webBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        webBtn.setToolTipText("Open Web Interface in your browser (http://localhost:8080)");
+        webBtn.addActionListener(e -> {
+            try {
+                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                    Desktop.getDesktop().browse(URI.create("http://localhost:8080"));
+                }
+            } catch (Exception ignored) {
+            }
+        });
+        controls.add(webBtn);
 
         header.add(controls, BorderLayout.EAST);
         return header;
