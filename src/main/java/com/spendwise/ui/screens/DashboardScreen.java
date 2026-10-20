@@ -117,23 +117,16 @@ public class DashboardScreen extends JPanel implements BaseScreen {
 
         content.add(Box.createVerticalStrut(16));
 
-        JPanel midGrid = new JPanel(new GridLayout(1, 2, 16, 0));
-        midGrid.setOpaque(false);
-        midGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
-        midGrid.setPreferredSize(new Dimension(800, 310));
-        midGrid.setMaximumSize(new Dimension(3000, 310));
+        JPanel queueCard = buildCard("Priority Decision Queue", "Ranked by financial impact × confidence × budget risk");
+        queueCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+        queueCard.setPreferredSize(new Dimension(800, 260));
+        queueCard.setMaximumSize(new Dimension(3000, 280));
 
-        JPanel leftQueueCard = buildCard("Priority Decision Queue", "Ranked by financial impact × confidence × budget risk");
         signalsQueuePanel = new JPanel();
         signalsQueuePanel.setLayout(new BoxLayout(signalsQueuePanel, BoxLayout.Y_AXIS));
         signalsQueuePanel.setOpaque(false);
-        leftQueueCard.add(signalsQueuePanel, BorderLayout.CENTER);
-
-        JPanel rightGuardrailsCard = buildGuardrailsAndBudgetPanel();
-
-        midGrid.add(leftQueueCard);
-        midGrid.add(rightGuardrailsCard);
-        content.add(midGrid);
+        queueCard.add(signalsQueuePanel, BorderLayout.CENTER);
+        content.add(queueCard);
 
         content.add(Box.createVerticalStrut(16));
 
@@ -232,7 +225,6 @@ public class DashboardScreen extends JPanel implements BaseScreen {
         chips.setOpaque(false);
         chips.add(createMetricChip("Signals reconciled", "6 categories"));
         chips.add(createMetricChip("Priority decisions", "1 P1 Spike"));
-        chips.add(createMetricChip("Guardrails active", "3 / 3 active"));
 
         leftSide.add(kickerRow);
         leftSide.add(Box.createVerticalStrut(4));
@@ -348,51 +340,6 @@ public class DashboardScreen extends JPanel implements BaseScreen {
         head.add(s, BorderLayout.SOUTH);
         card.add(head, BorderLayout.NORTH);
         return card;
-    }
-
-    private JPanel buildGuardrailsAndBudgetPanel() {
-        JPanel card = buildCard("Financial Guardrails", "Constraints the decision engine respects");
-        JPanel list = new JPanel();
-        list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
-        list.setOpaque(false);
-
-        list.add(createGuardrailRow("Monthly budget ceiling", "ACTIVE", "Restricts spending when category exceeds 80% limit.", AppTheme.PRIMARY_ACCENT));
-        list.add(Box.createVerticalStrut(6));
-        list.add(createGuardrailRow("Baseline spike guard", "ACTIVE", "Flags categories exceeding historical baseline by 30%.", AppTheme.PRIMARY_ACCENT));
-        list.add(Box.createVerticalStrut(6));
-        list.add(createGuardrailRow("Savings rate floor", "ACTIVE", "Protects minimum 20% positive savings contribution.", AppTheme.PRIMARY_ACCENT));
-        list.add(Box.createVerticalStrut(6));
-        list.add(createGuardrailRow("Approval gate", "ACTIVE", "Recommendations remain advisory until approved.", AppTheme.PRIMARY_ACCENT));
-
-        card.add(list, BorderLayout.CENTER);
-        return card;
-    }
-
-    private JPanel createGuardrailRow(String title, String badge, String desc, Color badgeColor) {
-        JPanel row = new JPanel(new BorderLayout(4, 2));
-        row.setBackground(AppTheme.CARD_RAISE);
-        row.setBorder(new EmptyBorder(8, 10, 8, 10));
-
-        JPanel top = new JPanel(new BorderLayout());
-        top.setOpaque(false);
-        JLabel t = new JLabel(title);
-        t.setFont(AppTheme.FONT_BODY_BOLD);
-        t.setForeground(AppTheme.TEXT_PRIMARY);
-
-        JLabel b = new JLabel(badge);
-        b.setFont(new Font("JetBrains Mono", Font.BOLD, 9));
-        b.setForeground(badgeColor);
-
-        top.add(t, BorderLayout.WEST);
-        top.add(b, BorderLayout.EAST);
-
-        JLabel d = new JLabel(desc);
-        d.setFont(AppTheme.FONT_SMALL);
-        d.setForeground(AppTheme.TEXT_MUTED);
-
-        row.add(top, BorderLayout.NORTH);
-        row.add(d, BorderLayout.SOUTH);
-        return row;
     }
 
     @Override
